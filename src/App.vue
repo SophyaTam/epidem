@@ -1,12 +1,11 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
-<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <template>
   <div class="simulation-container">
     <h1>Модель эпидемии с карантинными зонами</h1>
     <canvas ref="simulationCanvas" width="800" height="500" class="simulation-field"></canvas>
     <div class="stats">
       Здоровые: {{ healthyCount }} | Зараженные: {{ infectedCount }} | С иммунитетом:
-      {{ immuneCount }}
+      {{ immuneCount }} | Умершие: {{ deadCount }}
     </div>
   </div>
 </template>
@@ -20,7 +19,7 @@ class Person {
   dy: number
   radius: number
   color: string
-  status: 'healthy' | 'infected' | 'immune'
+  status: 'healthy' | 'infected' | 'immune' | 'dead'
   infectionTime?: number
 
   constructor(x: number, y: number) {
@@ -39,18 +38,28 @@ class Person {
         return 'green'
       case 'immune':
         return 'orange'
+      case 'dead':
+        return 'black'
       default:
         return 'blue'
     }
   }
 
   update(canvasWidth: number, canvasHeight: number) {
+    // Удалите вызов super.update() - он не нужен
+    if (this.status === 'dead') return // Мертвые не двигаются
+
     this.x += this.dx
     this.y += this.dy
 
     // Отскок от границ
     if (this.x < this.radius || this.x > canvasWidth - this.radius) this.dx *= -1
     if (this.y < this.radius || this.y > canvasHeight - this.radius) this.dy *= -1
+  }
+
+  // Добавьте пустой метод checkDeath() в базовый класс
+  checkDeath(): boolean {
+    return false
   }
 
   draw(ctx: CanvasRenderingContext2D) {
@@ -90,6 +99,16 @@ class InfectedPerson extends Person {
     this.status = 'infected'
     this.infectionTime = Date.now()
   }
+  checkDeath(): boolean {
+    if (this.status === 'infected' && Math.random() < 0.01) {
+      this.status = 'dead'
+      this.dx = 0 // Останавливаем движение
+      this.dy = 0
+      this.color = this.getColor() // Обновляем цвет
+      return true
+    }
+    return false
+  }
 }
 
 class ImmunePerson extends Person {
@@ -119,6 +138,9 @@ export default {
     },
     immuneCount() {
       return this.persons.filter((p) => p.status === 'immune').length
+    },
+    deadCount() {
+      return this.persons.filter((p) => p.status === 'dead').length
     },
   },
   mounted() {
@@ -168,8 +190,13 @@ export default {
       const canvas = this.$refs.simulationCanvas as HTMLCanvasElement
 
       this.persons.forEach((person) => {
-        person.update(canvas.width, canvas.height)
-        person.checkRecovery(this.recoveryTime)
+        if (person.status !== 'dead') {
+          person.update(canvas.width, canvas.height)
+          if (person.status === 'infected') {
+            ;(person as InfectedPerson).checkDeath()
+            person.checkRecovery(this.recoveryTime)
+          }
+        }
       })
 
       this.checkInfections()
