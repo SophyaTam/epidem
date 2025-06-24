@@ -32,7 +32,7 @@ export default {
       ctx.strokeRect(0, 0, canvas.width, canvas.height)
     },
     createPersons() {
-      const count = 50 // Количество точек
+      const count = 250 // Количество точек
       for (let i = 0; i < count; i++) {
         this.persons.push({
           x: Math.random() * 800, // Случайная позиция по X
