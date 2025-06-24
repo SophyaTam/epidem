@@ -1,17 +1,125 @@
+<!-- eslint-disable @typescript-eslint/no-unused-vars -->
+<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <template>
   <div class="simulation-container">
     <h1>Модель эпидемии с карантинными зонами</h1>
     <canvas ref="simulationCanvas" width="800" height="500" class="simulation-field"></canvas>
+    <div class="stats">
+      Здоровые: {{ healthyCount }} | Зараженные: {{ infectedCount }} | С иммунитетом:
+      {{ immuneCount }}
+    </div>
   </div>
 </template>
 
 <script lang="ts">
+// Базовый класс точки
+class Person {
+  x: number
+  y: number
+  dx: number
+  dy: number
+  radius: number
+  color: string
+  status: 'healthy' | 'infected' | 'immune'
+  infectionTime?: number
+
+  constructor(x: number, y: number) {
+    this.x = x
+    this.y = y
+    this.dx = (Math.random() - 0.5) * 3
+    this.dy = (Math.random() - 0.5) * 3
+    this.radius = 4.5
+    this.status = 'healthy'
+    this.color = this.getColor()
+  }
+
+  getColor() {
+    switch (this.status) {
+      case 'infected':
+        return 'green'
+      case 'immune':
+        return 'orange'
+      default:
+        return 'blue'
+    }
+  }
+
+  update(canvasWidth: number, canvasHeight: number) {
+    this.x += this.dx
+    this.y += this.dy
+
+    // Отскок от границ
+    if (this.x < this.radius || this.x > canvasWidth - this.radius) this.dx *= -1
+    if (this.y < this.radius || this.y > canvasHeight - this.radius) this.dy *= -1
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
+    ctx.beginPath()
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2)
+    ctx.fillStyle = this.getColor()
+    ctx.fill()
+  }
+
+  infect() {
+    if (this.status === 'healthy') {
+      this.status = 'infected'
+      this.infectionTime = Date.now()
+      return true
+    }
+    return false
+  }
+
+  checkRecovery(recoveryTime: number) {
+    if (
+      this.status === 'infected' &&
+      this.infectionTime &&
+      Date.now() - this.infectionTime > recoveryTime
+    ) {
+      this.status = 'immune'
+      this.infectionTime = undefined
+      return true
+    }
+    return false
+  }
+}
+
+// Класс зараженной точки
+class InfectedPerson extends Person {
+  constructor(x: number, y: number) {
+    super(x, y)
+    this.status = 'infected'
+    this.infectionTime = Date.now()
+  }
+}
+
+class ImmunePerson extends Person {
+  constructor(x: number, y: number) {
+    super(x, y)
+    this.status = 'immune'
+    this.color = this.getColor()
+  }
+}
+
 export default {
   data() {
     return {
-      persons: [] as Array<{ x: number; y: number; dx: number; dy: number }>,
+      persons: [] as Person[],
       animationId: 0,
+      infectionDistance: 25,
+      infectionChance: 0.3,
+      recoveryTime: 8000,
     }
+  },
+  computed: {
+    healthyCount() {
+      return this.persons.filter((p) => p.status === 'healthy').length
+    },
+    infectedCount() {
+      return this.persons.filter((p) => p.status === 'infected').length
+    },
+    immuneCount() {
+      return this.persons.filter((p) => p.status === 'immune').length
+    },
   },
   mounted() {
     this.initSimulation()
@@ -24,54 +132,75 @@ export default {
   methods: {
     initSimulation() {
       const canvas = this.$refs.simulationCanvas as HTMLCanvasElement
-      const ctx = canvas.getContext('2d')
-
-      // Отрисовка поля
+      const ctx = canvas.getContext('2d')!
       ctx.strokeStyle = '#343'
       ctx.lineWidth = 3
       ctx.strokeRect(0, 0, canvas.width, canvas.height)
     },
     createPersons() {
-      const count = 250 // Количество точек
+      const count = 200
       for (let i = 0; i < count; i++) {
-        this.persons.push({
-          x: Math.random() * 800, // Случайная позиция по X
-          y: Math.random() * 500, // Случайная позиция по Y
-          dx: (Math.random() - 0.5) * 2, // Случайная скорость X (-1 до 1)
-          dy: (Math.random() - 0.5) * 2, // Случайная скорость Y (-1 до 1)
-        })
+        const x = Math.random() * 800
+        const y = Math.random() * 500
+
+        if (i < 5) {
+          this.persons.push(new InfectedPerson(x, y))
+        } else if (i < 10) {
+          // Первые 5-9 - иммунные
+          this.persons.push(new ImmunePerson(x, y))
+        } else {
+          this.persons.push(new Person(x, y))
+        }
       }
     },
     drawPersons() {
       const canvas = this.$refs.simulationCanvas as HTMLCanvasElement
-      const ctx = canvas.getContext('2d')
+      const ctx = canvas.getContext('2d')!
 
-      // Очищаем canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-      // Рисуем границу поля
       ctx.strokeStyle = '#343'
       ctx.lineWidth = 3
       ctx.strokeRect(0, 0, canvas.width, canvas.height)
 
-      // Рисуем все точки
-      ctx.fillStyle = 'blue' // Цвет точек
-      this.persons.forEach((person) => {
-        ctx.beginPath()
-        ctx.arc(person.x, person.y, 3, 0, Math.PI * 2) // Точки радиусом 3px
-        ctx.fill()
-      })
+      this.persons.forEach((person) => person.draw(ctx))
     },
     updatePositions() {
-      this.persons.forEach((person) => {
-        // Обновляем позиции
-        person.x += person.dx
-        person.y += person.dy
+      const canvas = this.$refs.simulationCanvas as HTMLCanvasElement
 
-        // Отскок от границ
-        if (person.x < 0 || person.x > 800) person.dx *= -1
-        if (person.y < 0 || person.y > 500) person.dy *= -1
+      this.persons.forEach((person) => {
+        person.update(canvas.width, canvas.height)
+        person.checkRecovery(this.recoveryTime)
       })
+
+      this.checkInfections()
+    },
+    checkInfections() {
+      for (let i = 0; i < this.persons.length; i++) {
+        for (let j = i + 1; j < this.persons.length; j++) {
+          const p1 = this.persons[i]
+          const p2 = this.persons[j]
+
+          const dx = p1.x - p2.x
+          const dy = p1.y - p2.y
+          const distance = Math.sqrt(dx * dx + dy * dy)
+
+          if (distance < this.infectionDistance) {
+            if (
+              p1.status === 'infected' &&
+              p2.status === 'healthy' &&
+              Math.random() < this.infectionChance
+            ) {
+              p2.infect()
+            } else if (
+              p2.status === 'infected' &&
+              p1.status === 'healthy' &&
+              Math.random() < this.infectionChance
+            ) {
+              p1.infect()
+            }
+          }
+        }
+      }
     },
     animate() {
       this.updatePositions()
@@ -97,5 +226,11 @@ export default {
   border: 1px solid #817b7b;
   background-color: #f5f5f5;
   margin-top: 20px;
+}
+
+.stats {
+  margin-top: 15px;
+  font-size: 1.2em;
+  font-weight: bold;
 }
 </style>
