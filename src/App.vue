@@ -1,13 +1,24 @@
 <template>
+  <!-- Основной контейнер приложения -->
   <div class="simulation-container">
+    <!-- Заголовок симуляции -->
     <h1>Модель эпидемии с карантинными зонами</h1>
+
+    <!-- Контейнер для основного содержимого -->
     <div class="content-wrapper">
+      <!-- Холст для отрисовки симуляции -->
       <canvas ref="simulationCanvas" width="800" height="500" class="simulation-field"></canvas>
+
+      <!-- Контейнер для графика -->
       <div class="chart-container">
+        <!-- Холст для отрисовки графика -->
         <canvas ref="chartCanvas" width="400" height="500" class="chart-field"></canvas>
       </div>
     </div>
+
+    <!-- Панель управления симуляцией -->
     <div class="controls">
+      <!-- Кнопки управления -->
       <button @click="startSimulation">Старт</button>
       <button @click="stopSimulation">Стоп</button>
       <button @click="resetSimulation">Сброс</button>
@@ -16,20 +27,27 @@
 </template>
 
 <script lang="ts">
-// Базовый класс точки
+// Базовый класс, представляющий человека в симуляции
 class Person {
+  // Координаты положения
   x: number
   y: number
+  // Скорость по осям
   dx: number
   dy: number
+  // Размер точки
   radius: number
+  // Цвет в зависимости от состояния
   color: string
+  // Текущее состояние: здоровый, зараженный, с иммунитетом, мертвый
   status: 'healthy' | 'infected' | 'immune' | 'dead'
+  // Время заражения (если статус infected)
   infectionTime?: number
 
   constructor(x: number, y: number) {
     this.x = x
     this.y = y
+    // Случайная начальная скорость
     this.dx = (Math.random() - 0.5) * 3
     this.dy = (Math.random() - 0.5) * 3
     this.radius = 4.5
@@ -37,34 +55,39 @@ class Person {
     this.color = this.getColor()
   }
 
+  // Возвращает цвет в зависимости от состояния
   getColor() {
     switch (this.status) {
       case 'infected':
-        return 'green'
+        return 'green' // Зараженные - зеленые
       case 'immune':
-        return 'orange'
+        return 'orange' // С иммунитетом - оранжевые
       case 'dead':
-        return 'black'
+        return 'black' // Мертвые - черные
       default:
-        return 'blue'
+        return 'blue' // Здоровые - синие
     }
   }
 
+  // Обновление позиции человека
   update(canvasWidth: number, canvasHeight: number) {
     if (this.status === 'dead') return // Мертвые не двигаются
 
+    // Двигаем персонажа
     this.x += this.dx
     this.y += this.dy
 
-    // Отскок от границ
+    // Отскок от границ холста
     if (this.x < this.radius || this.x > canvasWidth - this.radius) this.dx *= -1
     if (this.y < this.radius || this.y > canvasHeight - this.radius) this.dy *= -1
   }
 
+  // Проверка на смерть (в базовом классе всегда false)
   checkDeath(): boolean {
     return false
   }
 
+  // Отрисовка человека на холсте
   draw(ctx: CanvasRenderingContext2D) {
     ctx.beginPath()
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2)
@@ -72,6 +95,7 @@ class Person {
     ctx.fill()
   }
 
+  // Заражение человека
   infect() {
     if (this.status === 'healthy') {
       this.status = 'infected'
@@ -81,6 +105,7 @@ class Person {
     return false
   }
 
+  // Проверка выздоровления
   checkRecovery(recoveryTime: number) {
     if (
       this.status === 'infected' &&
@@ -95,25 +120,28 @@ class Person {
   }
 }
 
-// Класс зараженной точки
+// Класс зараженного человека (наследуется от Person)
 class InfectedPerson extends Person {
   constructor(x: number, y: number) {
     super(x, y)
     this.status = 'infected'
     this.infectionTime = Date.now()
   }
+
+  // У зараженных есть 1% шанс умереть при каждом обновлении
   checkDeath(): boolean {
     if (this.status === 'infected' && Math.random() < 0.01) {
       this.status = 'dead'
       this.dx = 0 // Останавливаем движение
       this.dy = 0
-      this.color = this.getColor() // Обновляем цвет
+      this.color = this.getColor()
       return true
     }
     return false
   }
 }
 
+// Класс человека с иммунитетом (наследуется от Person)
 class ImmunePerson extends Person {
   constructor(x: number, y: number) {
     super(x, y)
@@ -125,27 +153,30 @@ class ImmunePerson extends Person {
 export default {
   data() {
     return {
-      persons: [] as Person[],
-      animationId: 0,
-      chartAnimationId: 0,
-      isRunning: false,
-      infectionDistance: 25,
-      infectionChance: 0.3,
-      recoveryTime: 8000,
+      persons: [] as Person[], // Массив всех персонажей
+      animationId: 0, // ID анимации симуляции
+      chartAnimationId: 0, // ID анимации графика
+      isRunning: false, // Флаг работы симуляции
+      infectionDistance: 25, // Дистанция заражения
+      infectionChance: 0.3, // Вероятность заражения
+      recoveryTime: 8000, // Время выздоровления в мс
       history: [] as Array<{
+        // История изменений для графика
         healthy: number
         infected: number
         immune: number
         dead: number
         time: number
       }>,
-      maxHistoryLength: 100,
+      maxHistoryLength: 100, // Максимальная длина истории
+      // Цвета для графика
       chartColors: {
         healthy: 'rgba(0, 0, 255, 0.7)',
         infected: 'rgba(0, 255, 0, 0.7)',
         immune: 'rgba(255, 165, 0, 0.7)',
         dead: 'rgba(0, 0, 0, 0.7)',
       },
+      // Цвета заливки для графика
       fillColors: {
         healthy: 'rgba(0, 0, 255, 0.2)',
         infected: 'rgba(0, 255, 0, 0.2)',
@@ -154,6 +185,8 @@ export default {
       },
     }
   },
+
+  // Вычисляемые свойства для подсчета количества людей в каждом состоянии
   computed: {
     healthyCount() {
       return this.persons.filter((p) => p.status === 'healthy').length
@@ -168,29 +201,104 @@ export default {
       return this.persons.filter((p) => p.status === 'dead').length
     },
   },
+
+  // Хук, вызываемый после монтирования компонента
   mounted() {
-    this.initSimulation()
-    this.createPersons()
-    this.initChart()
+    this.initSimulation() // Инициализация симуляции
+    this.createPersons() // Создание персонажей
+    this.initChart() // Инициализация графика
   },
+
+  // Хук, вызываемый перед удалением компонента
   beforeUnmount() {
-    this.stopSimulation()
+    this.stopSimulation() // Остановка симуляции
   },
+
   methods: {
+    // Инициализация симуляции - настройка холста
     initSimulation() {
       const canvas = this.$refs.simulationCanvas as HTMLCanvasElement
       const ctx = canvas.getContext('2d')!
       ctx.strokeStyle = '#343'
       ctx.lineWidth = 3
       ctx.strokeRect(0, 0, canvas.width, canvas.height)
-    },
-    createPersons() {
-      this.persons = [] // Очищаем массив перед созданием новых персонажей
-      const count = 200
-      for (let i = 0; i < count; i++) {
-        const x = Math.random() * 800
-        const y = Math.random() * 500
 
+      // Рисуем карантинные зоны (прямоугольники)
+      this.drawRectangles(ctx, canvas)
+    },
+
+    // Отрисовка карантинных зон (прямоугольников)
+    drawRectangles(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
+      // Синий прямоугольник в левом верхнем углу
+      ctx.fillStyle = 'rgba(0, 0, 255, 0.3)'
+      ctx.fillRect(20, 20, 150, 100)
+      ctx.strokeStyle = 'blue'
+      ctx.lineWidth = 2
+      ctx.strokeRect(20, 20, 150, 100)
+
+      // Зеленый прямоугольник в правом нижнем углу
+      ctx.fillStyle = 'rgba(0, 255, 0, 0.3)'
+      ctx.fillRect(canvas.width - 170, canvas.height - 120, 150, 100)
+      ctx.strokeStyle = 'green'
+      ctx.lineWidth = 2
+      ctx.strokeRect(canvas.width - 170, canvas.height - 120, 150, 100)
+    },
+
+    // Проверка, находится ли точка внутри карантинных зон
+    isPointInRectangles(x: number, y: number, canvas: HTMLCanvasElement): boolean {
+      const rectangles = [
+        { x: 20, y: 20, width: 150, height: 100 }, // Синий прямоугольник
+        { x: canvas.width - 170, y: canvas.height - 120, width: 150, height: 100 }, // Зеленый
+      ]
+
+      // Проверяем каждый прямоугольник
+      return rectangles.some(
+        (rect) => x > rect.x && x < rect.x + rect.width && y > rect.y && y < rect.y + rect.height,
+      )
+    },
+
+    // Проверка, находится ли точка слишком близко к карантинным зонам
+    isPointNearRectangles(x: number, y: number, canvas: HTMLCanvasElement): boolean {
+      const rectangles = [
+        { x: 20, y: 20, width: 150, height: 100 },
+        { x: canvas.width - 170, y: canvas.height - 120, width: 150, height: 100 },
+      ]
+
+      // Проверяем зону вокруг каждого прямоугольника
+      return rectangles.some(
+        (rect) =>
+          x > rect.x - this.infectionDistance &&
+          x < rect.x + rect.width + this.infectionDistance &&
+          y > rect.y - this.infectionDistance &&
+          y < rect.y + rect.height + this.infectionDistance,
+      )
+    },
+
+    // Создание персонажей
+    createPersons() {
+      this.persons = []
+      const count = 200
+      const canvas = this.$refs.simulationCanvas as HTMLCanvasElement
+
+      for (let i = 0; i < count; i++) {
+        let x, y
+        let attempts = 0
+        const maxAttempts = 100
+
+        // Пытаемся найти позицию вне карантинных зон
+        do {
+          x = Math.random() * canvas.width
+          y = Math.random() * canvas.height
+          attempts++
+        } while (
+          (this.isPointInRectangles(x, y, canvas) || this.isPointNearRectangles(x, y, canvas)) &&
+          attempts < maxAttempts
+        )
+
+        // Если не нашли подходящее место - пропускаем персонажа
+        if (attempts >= maxAttempts) continue
+
+        // Первые 5 - зараженные, следующие 5 - с иммунитетом, остальные - здоровые
         if (i < 5) {
           this.persons.push(new InfectedPerson(x, y))
         } else if (i < 10) {
@@ -200,23 +308,51 @@ export default {
         }
       }
     },
+
+    // Отрисовка всех персонажей
     drawPersons() {
       const canvas = this.$refs.simulationCanvas as HTMLCanvasElement
       const ctx = canvas.getContext('2d')!
 
+      // Очищаем холст
       ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      // Рисуем границу
       ctx.strokeStyle = '#343'
       ctx.lineWidth = 3
       ctx.strokeRect(0, 0, canvas.width, canvas.height)
 
+      // Рисуем карантинные зоны
+      this.drawRectangles(ctx, canvas)
+
+      // Рисуем всех персонажей
       this.persons.forEach((person) => person.draw(ctx))
     },
+
+    // Обновление позиций всех персонажей
     updatePositions() {
       const canvas = this.$refs.simulationCanvas as HTMLCanvasElement
 
       this.persons.forEach((person) => {
         if (person.status !== 'dead') {
+          const prevX = person.x
+          const prevY = person.y
+
+          // Обновляем позицию
           person.update(canvas.width, canvas.height)
+
+          // Если попали в карантинную зону - отскакиваем
+          if (
+            this.isPointInRectangles(person.x, person.y, canvas) ||
+            this.isPointNearRectangles(person.x, person.y, canvas)
+          ) {
+            person.x = prevX
+            person.y = prevY
+            person.dx *= -1
+            person.dy *= -1
+          }
+
+          // Проверяем состояние зараженных
           if (person.status === 'infected') {
             ;(person as InfectedPerson).checkDeath()
             person.checkRecovery(this.recoveryTime)
@@ -224,20 +360,26 @@ export default {
         }
       })
 
+      // Проверяем заражения и обновляем историю
       this.checkInfections()
       this.updateHistory()
     },
+
+    // Проверка заражений между персонажами
     checkInfections() {
       for (let i = 0; i < this.persons.length; i++) {
         for (let j = i + 1; j < this.persons.length; j++) {
           const p1 = this.persons[i]
           const p2 = this.persons[j]
 
+          // Вычисляем расстояние между персонажами
           const dx = p1.x - p2.x
           const dy = p1.y - p2.y
           const distance = Math.sqrt(dx * dx + dy * dy)
 
+          // Если расстояние меньше дистанции заражения
           if (distance < this.infectionDistance) {
+            // Проверяем все возможные комбинации заражения
             if (
               p1.status === 'infected' &&
               p2.status === 'healthy' &&
@@ -255,13 +397,17 @@ export default {
         }
       }
     },
+
+    // Обновление истории для графика
     updateHistory() {
       const currentTime = Date.now()
 
+      // Удаляем старые записи, если их слишком много
       if (this.history.length >= this.maxHistoryLength) {
         this.history.shift()
       }
 
+      // Добавляем текущее состояние
       this.history.push({
         healthy: this.healthyCount,
         infected: this.infectedCount,
@@ -270,35 +416,48 @@ export default {
         time: currentTime,
       })
     },
+
+    // Инициализация графика
     initChart() {
       const chartCanvas = this.$refs.chartCanvas as HTMLCanvasElement
       const ctx = chartCanvas.getContext('2d')!
+
+      // Очищаем и настраиваем холст
       ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height)
       ctx.strokeStyle = '#343'
       ctx.lineWidth = 3
       ctx.strokeRect(0, 0, chartCanvas.width, chartCanvas.height)
+
+      // Запускаем отрисовку графика
       this.drawChart()
     },
+
+    // Отрисовка графика
     drawChart() {
       const chartCanvas = this.$refs.chartCanvas as HTMLCanvasElement
       const ctx = chartCanvas.getContext('2d')!
 
+      // Очищаем холст
       ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height)
+
+      // Рисуем границу
       ctx.strokeStyle = '#343'
       ctx.lineWidth = 3
       ctx.strokeRect(0, 0, chartCanvas.width, chartCanvas.height)
 
+      // Если данных недостаточно - выходим
       if (this.history.length < 2) {
         this.chartAnimationId = requestAnimationFrame(this.drawChart)
         return
       }
 
+      // Настройки отступов и размеров
       const padding = 40
       const chartWidth = chartCanvas.width - 2 * padding
       const chartHeight = chartCanvas.height - 2 * padding
       const totalPeople = this.persons.length
 
-      // Рисуем оси
+      // Рисуем оси графика
       ctx.beginPath()
       ctx.moveTo(padding, padding)
       ctx.lineTo(padding, chartCanvas.height - padding)
@@ -316,7 +475,7 @@ export default {
       ctx.fillText('Количество людей', 0, 0)
       ctx.restore()
 
-      // Масштабирование по времени
+      // Вычисляем временной диапазон
       const minTime = this.history[0].time
       const maxTime = this.history[this.history.length - 1].time
       const timeRange = maxTime - minTime
@@ -328,6 +487,7 @@ export default {
       ctx.textAlign = 'right'
       ctx.textBaseline = 'middle'
 
+      // Рисуем деления и подписи на оси Y
       for (let i = 0; i <= yAxisSteps; i++) {
         const value = Math.round((i / yAxisSteps) * totalPeople)
         const y = chartCanvas.height - padding - (i / yAxisSteps) * chartHeight
@@ -344,7 +504,7 @@ export default {
       }
       ctx.textAlign = 'left'
 
-      // Функция для рисования графика с заливкой
+      // Функция для рисования одной линии графика с заливкой
       const drawArea = (
         property: 'healthy' | 'infected' | 'immune' | 'dead',
         color: string,
@@ -352,6 +512,7 @@ export default {
       ) => {
         ctx.beginPath()
 
+        // Рисуем линию графика
         for (let i = 0; i < this.history.length; i++) {
           const point = this.history[i]
           const x = padding + ((point.time - minTime) / timeRange) * chartWidth
@@ -364,15 +525,18 @@ export default {
           }
         }
 
+        // Замыкаем область для заливки
         const lastPoint = this.history[this.history.length - 1]
         const lastX = padding + ((lastPoint.time - minTime) / timeRange) * chartWidth
         ctx.lineTo(lastX, chartCanvas.height - padding)
         ctx.lineTo(padding, chartCanvas.height - padding)
         ctx.closePath()
 
+        // Заливаем область
         ctx.fillStyle = fillColor
         ctx.fill()
 
+        // Рисуем линию поверх заливки
         ctx.beginPath()
         for (let i = 0; i < this.history.length; i++) {
           const point = this.history[i]
@@ -390,17 +554,18 @@ export default {
         ctx.stroke()
       }
 
-      // Рисуем все области
+      // Рисуем все графики (снизу вверх)
       drawArea('dead', this.chartColors.dead, this.fillColors.dead)
       drawArea('immune', this.chartColors.immune, this.fillColors.immune)
       drawArea('infected', this.chartColors.infected, this.fillColors.infected)
       drawArea('healthy', this.chartColors.healthy, this.fillColors.healthy)
 
-      // Легенда
+      // Легенда графика
       const legendX = chartCanvas.width - 150
       const legendY = 20
       const legendItemHeight = 20
 
+      // Функция для отрисовки элемента легенды
       const drawLegendItem = (
         text: string,
         color: string,
@@ -416,6 +581,7 @@ export default {
         ctx.fillText(`${text}: ${count}`, legendX + 20, y + 12)
       }
 
+      // Рисуем все элементы легенды
       drawLegendItem(
         'Здоровые',
         this.chartColors.healthy,
@@ -445,39 +611,48 @@ export default {
         this.deadCount,
       )
 
+      // Запускаем анимацию графика
       this.chartAnimationId = requestAnimationFrame(this.drawChart)
     },
+
+    // Основной цикл анимации
     animate() {
       if (!this.isRunning) return
 
-      this.updatePositions()
-      this.drawPersons()
-      this.animationId = requestAnimationFrame(this.animate)
+      this.updatePositions() // Обновляем позиции
+      this.drawPersons() // Перерисовываем
+      this.animationId = requestAnimationFrame(this.animate) // Запускаем следующий кадр
     },
+
+    // Запуск симуляции
     startSimulation() {
       if (this.isRunning) return
 
       this.isRunning = true
       this.animationId = requestAnimationFrame(this.animate)
     },
+
+    // Остановка симуляции
     stopSimulation() {
       this.isRunning = false
       cancelAnimationFrame(this.animationId)
     },
+
+    // Сброс симуляции
     resetSimulation() {
-      this.stopSimulation()
-      this.history = []
-      this.createPersons()
-      this.initSimulation()
-      this.initChart()
-      this.createPersons()
-      this.drawPersons()
+      this.stopSimulation() // Останавливаем
+      this.history = [] // Очищаем историю
+      this.createPersons() // Создаем новых персонажей
+      this.initSimulation() // Инициализируем симуляцию
+      this.initChart() // Инициализируем график
+      this.drawPersons() // Отрисовываем начальное состояние
     },
   },
 }
 </script>
 
 <style scoped>
+/* Основные стили компонента */
 .simulation-container {
   display: flex;
   flex-direction: column;
@@ -485,26 +660,31 @@ export default {
   padding: 20px;
 }
 
+/* Контейнер для основного содержимого */
 .content-wrapper {
   display: flex;
   gap: 20px;
   align-items: center;
 }
 
+/* Стили для поля симуляции */
 .simulation-field {
   border: 1px solid #817b7b;
   background-color: #f5f5f5;
 }
 
+/* Стили для контейнера графика */
 .chart-container {
   border: 1px solid #817b7b;
   background-color: white;
 }
 
+/* Стиль для холста графика */
 .chart-field {
   display: block;
 }
 
+/* Стили для панели управления */
 .controls {
   margin-top: 15px;
   display: flex;
@@ -517,28 +697,17 @@ export default {
   cursor: pointer;
 }
 
-.stats {
-  margin-top: 15px;
-  font-size: 1.2em;
-  font-weight: bold;
-}
-
-.stats span {
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-/* Общие стили кнопок */
+/* Общие стили для кнопок */
 button {
-  padding: 10px 20px; /* Внутренние отступы */
-  border: none; /* Без границы */
-  border-radius: 4px; /* Скругленные углы */
-  cursor: pointer; /* Указатель при наведении */
-  font-weight: bold; /* Жирный текст */
-  color: white; /* Белый текст */
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  color: white;
 }
 
-/* Стили для конкретных кнопок по порядку */
+/* Индивидуальные стили кнопок */
 button:nth-child(1) {
   background: #4caf50;
 } /* Старт - зеленый */
