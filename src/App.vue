@@ -106,11 +106,11 @@ class Person {
   }
 
   // Проверка выздоровления
-  checkRecovery(recoveryTime: number) {
+  checkRecovery(recoveryTime: number, currentTime: number) {
     if (
       this.status === 'infected' &&
       this.infectionTime &&
-      Date.now() - this.infectionTime > recoveryTime
+      currentTime - this.infectionTime > recoveryTime
     ) {
       this.status = 'immune'
       this.infectionTime = undefined
@@ -119,7 +119,6 @@ class Person {
     return false
   }
 }
-
 // Класс зараженного человека (наследуется от Person)
 class InfectedPerson extends Person {
   constructor(x: number, y: number) {
@@ -160,6 +159,10 @@ export default {
       infectionDistance: 25, // Дистанция заражения
       infectionChance: 0.3, // Вероятность заражения
       recoveryTime: 8000, // Время выздоровления в мс
+      pauseTime: 0, // Добавляем переменную для хранения времени паузы
+      timeOffset: 0, // Смещение времени при паузе
+      isChartPaused: false,
+      lastChartTime: 0,
       history: [] as Array<{
         // История изменений для графика
         healthy: number
@@ -332,16 +335,15 @@ export default {
     // Обновление позиций всех персонажей
     updatePositions() {
       const canvas = this.$refs.simulationCanvas as HTMLCanvasElement
+      const currentTime = Date.now() - this.timeOffset // Текущее время с учетом паузы
 
       this.persons.forEach((person) => {
         if (person.status !== 'dead') {
           const prevX = person.x
           const prevY = person.y
 
-          // Обновляем позицию
           person.update(canvas.width, canvas.height)
 
-          // Если попали в карантинную зону - отскакиваем
           if (
             this.isPointInRectangles(person.x, person.y, canvas) ||
             this.isPointNearRectangles(person.x, person.y, canvas)
@@ -352,15 +354,13 @@ export default {
             person.dy *= -1
           }
 
-          // Проверяем состояние зараженных
           if (person.status === 'infected') {
             ;(person as InfectedPerson).checkDeath()
-            person.checkRecovery(this.recoveryTime)
+            person.checkRecovery(this.recoveryTime, currentTime) // Передаем текущее время
           }
         }
       })
 
-      // Проверяем заражения и обновляем историю
       this.checkInfections()
       this.updateHistory()
     },
@@ -400,14 +400,12 @@ export default {
 
     // Обновление истории для графика
     updateHistory() {
-      const currentTime = Date.now()
+      const currentTime = Date.now() - (this.isRunning ? 0 : this.timeOffset)
 
-      // Удаляем старые записи, если их слишком много
       if (this.history.length >= this.maxHistoryLength) {
         this.history.shift()
       }
 
-      // Добавляем текущее состояние
       this.history.push({
         healthy: this.healthyCount,
         infected: this.infectedCount,
@@ -439,7 +437,13 @@ export default {
 
       // Очищаем холст
       ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height)
+      // Всегда сохраняем время последнего обновления
+      this.lastChartTime = Date.now()
 
+      // Очищаем только если симуляция активна
+      if (this.isRunning) {
+        ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height)
+      }
       // Рисуем границу
       ctx.strokeStyle = '#343'
       ctx.lineWidth = 3
@@ -447,6 +451,12 @@ export default {
 
       // Если данных недостаточно - выходим
       if (this.history.length < 2) {
+        this.chartAnimationId = requestAnimationFrame(this.drawChart)
+        return
+      }
+
+      // Если на паузе - просто запрашиваем следующий кадр без обновления
+      if (this.isChartPaused) {
         this.chartAnimationId = requestAnimationFrame(this.drawChart)
         return
       }
@@ -624,28 +634,59 @@ export default {
       this.animationId = requestAnimationFrame(this.animate) // Запускаем следующий кадр
     },
 
-    // Запуск симуляции
+    stopSimulation() {
+      if (!this.isRunning) return
+
+      this.isRunning = false
+      this.pauseTime = Date.now()
+      cancelAnimationFrame(this.animationId)
+      // Не отменяем анимацию графика!
+    },
+
     startSimulation() {
       if (this.isRunning) return
+
+      if (this.pauseTime > 0) {
+        this.timeOffset += Date.now() - this.pauseTime
+        this.pauseTime = 0
+      }
 
       this.isRunning = true
       this.animationId = requestAnimationFrame(this.animate)
     },
 
-    // Остановка симуляции
-    stopSimulation() {
-      this.isRunning = false
-      cancelAnimationFrame(this.animationId)
-    },
-
     // Сброс симуляции
     resetSimulation() {
-      this.stopSimulation() // Останавливаем
-      this.history = [] // Очищаем историю
-      this.createPersons() // Создаем новых персонажей
-      this.initSimulation() // Инициализируем симуляцию
-      this.initChart() // Инициализируем график
-      this.drawPersons() // Отрисовываем начальное состояние
+      // Полностью останавливаем симуляцию
+      this.stopSimulation()
+
+      // Сбрасываем все временные параметры
+      this.pauseTime = 0
+      this.timeOffset = 0
+      this.isChartPaused = false
+
+      // Очищаем историю данных
+      this.history = []
+
+      // Пересоздаем персонажей (это обновит computed свойства)
+      this.persons = [] // Сначала очищаем массив
+      this.createPersons() // Затем создаем новых
+
+      // Принудительно обновляем computed свойства
+      this.$nextTick(() => {
+        // Полностью очищаем и переинициализируем график
+        const chartCanvas = this.$refs.chartCanvas as HTMLCanvasElement
+        const ctx = chartCanvas.getContext('2d')!
+        ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height)
+
+        // Перерисовываем начальное состояние
+        this.initSimulation()
+        this.initChart()
+        this.drawPersons()
+
+        // Принудительный пересчет
+        this.$forceUpdate()
+      })
     },
   },
 }
