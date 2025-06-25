@@ -589,6 +589,7 @@ export default {
       this.updateHistory()
     },
     // Проверка заражений между персонажами
+    // Проверка заражений между персонажами
     checkInfections() {
       for (let i = 0; i < this.persons.length; i++) {
         for (let j = i + 1; j < this.persons.length; j++) {
@@ -603,9 +604,27 @@ export default {
           // Если расстояние меньше дистанции заражения
           if (distance < this.infectionDistance) {
             // Проверяем все возможные комбинации заражения
+
+            // Проверка, находится ли здоровый человек в синем прямоугольнике
+            const isP2InBlueRect =
+              p2.status === 'healthy' &&
+              p2.x > this.blueRect.x &&
+              p2.x < this.blueRect.x + this.blueRect.width &&
+              p2.y > this.blueRect.y &&
+              p2.y < this.blueRect.y + this.blueRect.height
+
+            const isP1InBlueRect =
+              p1.status === 'healthy' &&
+              p1.x > this.blueRect.x &&
+              p1.x < this.blueRect.x + this.blueRect.width &&
+              p1.y > this.blueRect.y &&
+              p1.y < this.blueRect.y + this.blueRect.height
+
+            // Если p1 заражен, p2 здоров и НЕ в синем прямоугольнике
             if (
               p1.status === 'infected' &&
               p2.status === 'healthy' &&
+              !isP2InBlueRect &&
               Math.random() < this.infectionChance
             ) {
               p2.infect()
@@ -613,9 +632,12 @@ export default {
               if (p2.inQuarantine) {
                 p2.startMovingToQuarantine(this.greenRect)
               }
-            } else if (
+            }
+            // Если p2 заражен, p1 здоров и НЕ в синем прямоугольнике
+            else if (
               p2.status === 'infected' &&
               p1.status === 'healthy' &&
+              !isP1InBlueRect &&
               Math.random() < this.infectionChance
             ) {
               p1.infect()
