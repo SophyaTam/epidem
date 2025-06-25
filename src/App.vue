@@ -43,6 +43,16 @@ class Person {
   status: 'healthy' | 'infected' | 'immune' | 'dead'
   // Время заражения (если статус infected)
   infectionTime?: number
+  // Флаг нахождения в карантинной зоне
+  inQuarantine: boolean
+  // Границы карантинной зоны
+  quarantineZone?: { x: number; y: number; width: number; height: number }
+  // Флаг выхода из карантина
+  exitingQuarantine: boolean
+  // Флаг движения в карантин
+  movingToQuarantine: boolean
+  // Целевая точка в карантине
+  quarantineTarget?: { x: number; y: number }
 
   constructor(x: number, y: number) {
     this.x = x
@@ -53,13 +63,16 @@ class Person {
     this.radius = 4.5
     this.status = 'healthy'
     this.color = this.getColor()
+    this.inQuarantine = false
+    this.exitingQuarantine = false
+    this.movingToQuarantine = false
   }
 
   // Возвращает цвет в зависимости от состояния
   getColor() {
     switch (this.status) {
       case 'infected':
-        return 'green' // Зараженные - зеленые
+        return 'green' // Зараженные в карантине - красные, остальные - зеленые
       case 'immune':
         return 'orange' // С иммунитетом - оранжевые
       case 'dead':
@@ -73,13 +86,76 @@ class Person {
   update(canvasWidth: number, canvasHeight: number) {
     if (this.status === 'dead') return // Мертвые не двигаются
 
-    // Двигаем персонажа
-    this.x += this.dx
-    this.y += this.dy
+    // Если движется в карантин
+    if (this.movingToQuarantine && this.quarantineTarget && this.quarantineZone) {
+      const target = this.quarantineTarget
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const zone = this.quarantineZone
 
-    // Отскок от границ холста
-    if (this.x < this.radius || this.x > canvasWidth - this.radius) this.dx *= -1
-    if (this.y < this.radius || this.y > canvasHeight - this.radius) this.dy *= -1
+      // Вычисляем направление к цели
+      const dx = target.x - this.x
+      const dy = target.y - this.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+
+      // Если достигли цели - останавливаемся
+      if (distance < 2) {
+        this.movingToQuarantine = false
+        this.inQuarantine = true
+      } else {
+        // Двигаемся к цели
+        const speed = 2
+        this.dx = (dx / distance) * speed
+        this.dy = (dy / distance) * speed
+        this.x += this.dx
+        this.y += this.dy
+      }
+    }
+    // Если в карантине и не выходит из него - двигаемся только внутри карантинной зоны
+    else if (this.inQuarantine && this.quarantineZone && !this.exitingQuarantine) {
+      const zone = this.quarantineZone
+
+      // Двигаем персонажа
+      this.x += this.dx
+      this.y += this.dy
+
+      // Отскок от границ карантинной зоны
+      if (this.x < zone.x + this.radius || this.x > zone.x + zone.width - this.radius) this.dx *= -1
+      if (this.y < zone.y + this.radius || this.y > zone.y + zone.height - this.radius)
+        this.dy *= -1
+
+      // Корректируем позицию, если вышли за границы
+      this.x = Math.max(zone.x + this.radius, Math.min(zone.x + zone.width - this.radius, this.x))
+      this.y = Math.max(zone.y + this.radius, Math.min(zone.y + zone.height - this.radius, this.y))
+    }
+    // Если выходит из карантина
+    else if (this.exitingQuarantine && this.quarantineZone) {
+      const zone = this.quarantineZone
+
+      // Двигаем персонажа
+      this.x += this.dx * 1.5 // Ускоряем выход
+      this.y += this.dy * 1.5
+
+      // Если полностью вышел из карантинной зоны
+      if (
+        this.x < zone.x ||
+        this.x > zone.x + zone.width ||
+        this.y < zone.y ||
+        this.y > zone.y + zone.height
+      ) {
+        this.inQuarantine = false
+        this.exitingQuarantine = false
+        this.quarantineZone = undefined
+      }
+    }
+    // Обычное движение вне карантинной зоны
+    else {
+      this.x += this.dx
+      this.y += this.dy
+
+      // Отскок от границ холста
+      if (this.x < this.radius || this.x > canvasWidth - this.radius) this.dx *= -1
+      if (this.y < this.radius || this.y > canvasHeight - this.radius) this.dy *= -1
+    }
   }
 
   // Проверка на смерть (в базовом классе всегда false)
@@ -100,9 +176,26 @@ class Person {
     if (this.status === 'healthy') {
       this.status = 'infected'
       this.infectionTime = Date.now()
+
+      // 50% шанс попасть в карантин
+      if (Math.random() < 0.5) {
+        this.inQuarantine = true
+      }
+
       return true
     }
     return false
+  }
+
+  // Начать движение в карантин
+  startMovingToQuarantine(zone: { x: number; y: number; width: number; height: number }) {
+    this.quarantineZone = zone
+    this.movingToQuarantine = true
+    // Случайная точка внутри карантинной зоны
+    this.quarantineTarget = {
+      x: zone.x + this.radius + Math.random() * (zone.width - this.radius * 2),
+      y: zone.y + this.radius + Math.random() * (zone.height - this.radius * 2),
+    }
   }
 
   // Проверка выздоровления
@@ -114,22 +207,58 @@ class Person {
     ) {
       this.status = 'immune'
       this.infectionTime = undefined
+
+      // Если был в карантине - начинаем выход
+      if (this.inQuarantine) {
+        this.exitingQuarantine = true
+        this.movingToQuarantine = false
+
+        // Направляем персонажа к выходу из карантинной зоны
+        if (this.quarantineZone) {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const zone = this.quarantineZone
+          // Выбираем случайное направление для выхода
+          const exitSide = Math.floor(Math.random() * 4)
+
+          switch (exitSide) {
+            case 0: // Выход влево
+              this.dx = -Math.abs(this.dx)
+              break
+            case 1: // Выход вправо
+              this.dx = Math.abs(this.dx)
+              break
+            case 2: // Выход вверх
+              this.dy = -Math.abs(this.dy)
+              break
+            case 3: // Выход вниз
+              this.dy = Math.abs(this.dy)
+              break
+          }
+        }
+      }
+
       return true
     }
     return false
   }
 }
+
 // Класс зараженного человека (наследуется от Person)
 class InfectedPerson extends Person {
   constructor(x: number, y: number) {
     super(x, y)
     this.status = 'infected'
     this.infectionTime = Date.now()
+
+    // 50% шанс попасть в карантин
+    if (Math.random() < 0.5) {
+      this.inQuarantine = true
+    }
   }
 
-  // У зараженных есть 1% шанс умереть при каждом обновлении
+  // У зараженных есть 2% шанс умереть при каждом обновлении
   checkDeath(): boolean {
-    if (this.status === 'infected' && Math.random() < 0.01) {
+    if (this.status === 'infected' && Math.random() < 0.02) {
       this.status = 'dead'
       this.dx = 0 // Останавливаем движение
       this.dy = 0
@@ -186,6 +315,7 @@ export default {
         immune: 'rgba(255, 165, 0, 0.2)',
         dead: 'rgba(0, 0, 0, 0.2)',
       },
+      greenRect: { x: 0, y: 0, width: 0, height: 0 }, // Координаты зеленого прямоугольника
     }
   },
 
@@ -240,18 +370,31 @@ export default {
       ctx.strokeRect(20, 20, 150, 100)
 
       // Зеленый прямоугольник в правом нижнем углу
+      const greenRectX = canvas.width - 170
+      const greenRectY = canvas.height - 120
+      const greenRectWidth = 150
+      const greenRectHeight = 100
+
+      this.greenRect = {
+        x: greenRectX,
+        y: greenRectY,
+        width: greenRectWidth,
+        height: greenRectHeight,
+      }
+
       ctx.fillStyle = 'rgba(0, 255, 0, 0.3)'
-      ctx.fillRect(canvas.width - 170, canvas.height - 120, 150, 100)
+      ctx.fillRect(greenRectX, greenRectY, greenRectWidth, greenRectHeight)
       ctx.strokeStyle = 'green'
       ctx.lineWidth = 2
-      ctx.strokeRect(canvas.width - 170, canvas.height - 120, 150, 100)
+      ctx.strokeRect(greenRectX, greenRectY, greenRectWidth, greenRectHeight)
     },
 
     // Проверка, находится ли точка внутри карантинных зон
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     isPointInRectangles(x: number, y: number, canvas: HTMLCanvasElement): boolean {
       const rectangles = [
         { x: 20, y: 20, width: 150, height: 100 }, // Синий прямоугольник
-        { x: canvas.width - 170, y: canvas.height - 120, width: 150, height: 100 }, // Зеленый
+        this.greenRect, // Зеленый прямоугольник
       ]
 
       // Проверяем каждый прямоугольник
@@ -261,11 +404,9 @@ export default {
     },
 
     // Проверка, находится ли точка слишком близко к карантинным зонам
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     isPointNearRectangles(x: number, y: number, canvas: HTMLCanvasElement): boolean {
-      const rectangles = [
-        { x: 20, y: 20, width: 150, height: 100 },
-        { x: canvas.width - 170, y: canvas.height - 120, width: 150, height: 100 },
-      ]
+      const rectangles = [{ x: 20, y: 20, width: 150, height: 100 }, this.greenRect]
 
       // Проверяем зону вокруг каждого прямоугольника
       return rectangles.some(
@@ -303,7 +444,12 @@ export default {
 
         // Первые 5 - зараженные, следующие 5 - с иммунитетом, остальные - здоровые
         if (i < 5) {
-          this.persons.push(new InfectedPerson(x, y))
+          const person = new InfectedPerson(x, y)
+          // Если зараженный должен быть в карантине, начинаем движение в карантин
+          if (person.inQuarantine) {
+            person.startMovingToQuarantine(this.greenRect)
+          }
+          this.persons.push(person)
         } else if (i < 10) {
           this.persons.push(new ImmunePerson(x, y))
         } else {
@@ -344,9 +490,12 @@ export default {
 
           person.update(canvas.width, canvas.height)
 
+          // Если персонаж не в карантине и не движется в него, и пытается войти в карантинную зону - отталкиваем его
           if (
-            this.isPointInRectangles(person.x, person.y, canvas) ||
-            this.isPointNearRectangles(person.x, person.y, canvas)
+            !person.inQuarantine &&
+            !person.movingToQuarantine &&
+            !person.exitingQuarantine &&
+            this.isPointInRectangles(person.x, person.y, canvas)
           ) {
             person.x = prevX
             person.y = prevY
@@ -354,7 +503,13 @@ export default {
             person.dy *= -1
           }
 
+          // Проверяем состояние зараженных
           if (person.status === 'infected') {
+            // Если зараженный должен быть в карантине, но еще не там и не движется туда - начинаем движение
+            if (person.inQuarantine && !person.quarantineZone && !person.movingToQuarantine) {
+              person.startMovingToQuarantine(this.greenRect)
+            }
+
             ;(person as InfectedPerson).checkDeath()
             person.checkRecovery(this.recoveryTime, currentTime) // Передаем текущее время
           }
@@ -386,12 +541,20 @@ export default {
               Math.random() < this.infectionChance
             ) {
               p2.infect()
+              // Если новый зараженный должен быть в карантине
+              if (p2.inQuarantine) {
+                p2.startMovingToQuarantine(this.greenRect)
+              }
             } else if (
               p2.status === 'infected' &&
               p1.status === 'healthy' &&
               Math.random() < this.infectionChance
             ) {
               p1.infect()
+              // Если новый зараженный должен быть в карантине
+              if (p1.inQuarantine) {
+                p1.startMovingToQuarantine(this.greenRect)
+              }
             }
           }
         }
