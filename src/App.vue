@@ -91,46 +91,146 @@ class Person {
 
     this.lastBounceTime = now
 
-    const bounceLeft = this.x <= zone.x + this.radius
-    const bounceRight = this.x >= zone.x + zone.width - this.radius
-    const bounceTop = this.y <= zone.y + this.radius
-    const bounceBottom = this.y >= zone.y + zone.height - this.radius
+    // Определяем, с какой стороны произошло столкновение
+    const leftDist = Math.abs(this.x - (zone.x + this.radius))
+    const rightDist = Math.abs(this.x - (zone.x + zone.width - this.radius))
+    const topDist = Math.abs(this.y - (zone.y + this.radius))
+    const bottomDist = Math.abs(this.y - (zone.y + zone.height - this.radius))
 
-    if ((bounceLeft || bounceRight) && (bounceTop || bounceBottom)) {
-      this.dx *= -1 * (0.7 + Math.random() * 0.6)
-      this.dy *= -1 * (0.7 + Math.random() * 0.6)
-    } else if (bounceLeft || bounceRight) {
-      this.dx *= -1 * (0.8 + Math.random() * 0.4)
-      this.dy += (Math.random() - 0.5) * 0.7
-    } else if (bounceTop || bounceBottom) {
-      this.dy *= -1 * (0.8 + Math.random() * 0.4)
-      this.dx += (Math.random() - 0.5) * 0.7
+    const minDist = Math.min(leftDist, rightDist, topDist, bottomDist)
+
+    // Добавляем больше случайности и силы отскоку
+    const bouncePower = 1.2 + Math.random() * 0.3 // Увеличиваем силу отскока
+    const randomFactor = (Math.random() - 0.5) * 0.8 // Увеличиваем случайный фактор
+
+    if (minDist === leftDist || minDist === rightDist) {
+      // Горизонтальное столкновение
+      this.dx *= -bouncePower
+      this.dy += randomFactor
+      // Добавляем большее смещение от границы
+      const margin = this.radius + 2
+      this.x = minDist === leftDist ? zone.x + margin : zone.x + zone.width - margin
+    } else {
+      // Вертикальное столкновение
+      this.dy *= -bouncePower
+      this.dx += randomFactor
+      // Добавляем большее смещение от границы
+      const margin = this.radius + 2
+      this.y = minDist === topDist ? zone.y + margin : zone.y + zone.height - margin
+    }
+
+    // Гарантируем минимальную скорость после отскока
+    const minSpeedAfterBounce = 0.8 // Увеличиваем минимальную скорость
+    const speed = Math.sqrt(this.dx * this.dx + this.dy * this.dy)
+    if (speed < minSpeedAfterBounce) {
+      const angle = Math.atan2(this.dy, this.dx)
+      this.dx = minSpeedAfterBounce * Math.cos(angle)
+      this.dy = minSpeedAfterBounce * Math.sin(angle)
     }
   }
-
   update(canvasWidth: number, canvasHeight: number) {
     if (this.status === 'dead') return
 
+    // Если персонаж заражен и двигался в синий карантин, но еще не перенаправился
+    if (
+      this.status === 'infected' &&
+      this.movingToQuarantine &&
+      this.quarantineZone &&
+      this.quarantineZone.x === 150
+    ) {
+      // Отменяем текущее движение
+      this.movingToQuarantine = false
+      this.avoidancePoints = []
+      this.currentAvoidancePoint = undefined
+
+      // Начинаем движение в зеленый карантин
+      const greenRect = { x: 500, y: 250, width: 150, height: 100 }
+      const blueRect = { x: 150, y: 150, width: 150, height: 100 }
+      this.startMovingToQuarantine(greenRect, [blueRect])
+    }
+
+    // Для красных точек (зараженных, идущих в карантин) проверяем близость к синему карантину
+    if (this.status === 'infected' && this.movingToQuarantine && this.quarantineZone) {
+      const blueRect = { x: 150, y: 150, width: 150, height: 100 }
+      const avoidanceDistance = 20
+      const margin = 5
+
+      if (
+        this.x >= blueRect.x - margin &&
+        this.x <= blueRect.x + blueRect.width + margin &&
+        this.y >= blueRect.y - margin &&
+        this.y <= blueRect.y + blueRect.height + margin
+      ) {
+        // Принудительно сдвигаем вверх и добавляем случайное смещение
+        this.x += 4
+        this.dy = (Math.random() - 0.5) * 0.3
+        this.dx = 1.0
+      }
+
+      // Проверяем расстояние до всех сторон синего прямоугольника
+      const leftDist = this.x - (blueRect.x + blueRect.width)
+      const rightDist = blueRect.x - this.x
+      const topDist = this.y - (blueRect.y + blueRect.height)
+      const bottomDist = blueRect.y - this.y
+
+      // Если близко к левой или правой стороне
+      if (
+        (leftDist > 0 && leftDist < avoidanceDistance) ||
+        (rightDist > 0 && rightDist < avoidanceDistance)
+      ) {
+        // Изменяем направление по X, чтобы избежать столкновения
+        this.dx =
+          leftDist > 0
+            ? Math.abs(this.dx) * (0.8 + Math.random() * 0.4)
+            : -Math.abs(this.dx) * (0.8 + Math.random() * 0.4)
+      }
+
+      // Если близко к верхней или нижней стороне
+      if (
+        (topDist > 0 && topDist < avoidanceDistance) ||
+        (bottomDist > 0 && bottomDist < avoidanceDistance)
+      ) {
+        // Изменяем направление по Y, чтобы избежать столкновения
+        this.dy =
+          topDist > 0
+            ? Math.abs(this.dy) * (0.8 + Math.random() * 0.4)
+            : -Math.abs(this.dy) * (0.8 + Math.random() * 0.4)
+      }
+    }
+
+    // Проверка на залипание у границы
+    if (this.inQuarantine && this.quarantineZone) {
+      const zone = this.quarantineZone
+      const nearLeft = Math.abs(this.x - (zone.x + this.radius)) < 1
+      const nearRight = Math.abs(this.x - (zone.x + zone.width - this.radius)) < 1
+      const nearTop = Math.abs(this.y - (zone.y + this.radius)) < 1
+      const nearBottom = Math.abs(this.y - (zone.y + zone.height - this.radius)) < 1
+
+      if (nearLeft || nearRight || nearTop || nearBottom) {
+        this.dx += (Math.random() - 0.5) * 1.5
+        this.dy += (Math.random() - 0.5) * 1.5
+      }
+    }
+
     // Периодическое небольшое изменение направления
-    if (Math.random() < 0.02) {
-      this.dx += (Math.random() - 0.5) * 0.3
-      this.dy += (Math.random() - 0.5) * 0.3
-    }
-
-    // Регулярно добавляем небольшую случайность в движение
     if (Math.random() < 0.05) {
-      this.dx += (Math.random() - 0.5) * 0.4
-      this.dy += (Math.random() - 0.5) * 0.4
+      this.dx += (Math.random() - 0.5) * 0.5
+      this.dy += (Math.random() - 0.5) * 0.5
     }
-    // Минимальная скорость
-    const minSpeed = 0.3
-    if (Math.abs(this.dx) < minSpeed) this.dx = minSpeed * (this.dx < 0 ? -1 : 1)
-    if (Math.abs(this.dy) < minSpeed) this.dy = minSpeed * (this.dy < 0 ? -1 : 1)
 
-    // Ограничение максимальной скорости
-    const maxSpeed = 2
-    if (Math.abs(this.dx) > maxSpeed) this.dx = maxSpeed * (this.dx < 0 ? -1 : 1)
-    if (Math.abs(this.dy) > maxSpeed) this.dy = maxSpeed * (this.dy < 0 ? -1 : 1)
+    // Ограничиваем минимальную и максимальную скорость
+    const minSpeed = 0.8
+    const maxSpeed = 2.0
+    const speed = Math.sqrt(this.dx * this.dx + this.dy * this.dy)
+
+    if (speed > maxSpeed) {
+      this.dx = (this.dx / speed) * maxSpeed
+      this.dy = (this.dy / speed) * maxSpeed
+    } else if (speed < minSpeed) {
+      const angle = Math.random() * Math.PI * 2
+      this.dx = minSpeed * Math.cos(angle)
+      this.dy = minSpeed * Math.sin(angle)
+    }
 
     if (this.movingToQuarantine && this.quarantineTarget && this.quarantineZone) {
       const target = this.currentAvoidancePoint || this.quarantineTarget
@@ -172,32 +272,50 @@ class Person {
       }
     } else if (this.inQuarantine && this.quarantineZone && !this.exitingQuarantine) {
       const zone = this.quarantineZone
-      const prevX = this.x
-      const prevY = this.y
+
+      if (Math.random() < 0.1) {
+        this.dx += (Math.random() - 0.5) * 0.5
+        this.dy += (Math.random() - 0.5) * 0.5
+      }
 
       this.x += this.dx
       this.y += this.dy
 
-      // Проверка на залипание
-      if (this.x === prevX && this.y === prevY) {
-        this.dx = (Math.random() - 0.5) * 2
-        this.dy = (Math.random() - 0.5) * 2
-        return
-      }
-
-      // Умный отскок от границ
       if (
         this.x <= zone.x + this.radius ||
         this.x >= zone.x + zone.width - this.radius ||
         this.y <= zone.y + this.radius ||
         this.y >= zone.y + zone.height - this.radius
       ) {
-        this.smartBounce(zone)
+        const bouncePower = 1.5 + Math.random() * 0.5
+        const randomFactor = (Math.random() - 0.5) * 1.0
+
+        if (this.x <= zone.x + this.radius || this.x >= zone.x + zone.width - this.radius) {
+          this.dx *= -bouncePower
+          this.dy += randomFactor
+        } else {
+          this.dy *= -bouncePower
+          this.dx += randomFactor
+        }
+
+        const minSpeedAfterBounce = 1.2
+        const currentSpeed = Math.sqrt(this.dx * this.dx + this.dy * this.dy)
+        if (currentSpeed < minSpeedAfterBounce) {
+          const angle = Math.atan2(this.dy, this.dx)
+          this.dx = minSpeedAfterBounce * Math.cos(angle)
+          this.dy = minSpeedAfterBounce * Math.sin(angle)
+        }
       }
 
-      // Корректировка позиции
-      this.x = Math.max(zone.x + this.radius, Math.min(zone.x + zone.width - this.radius, this.x))
-      this.y = Math.max(zone.y + this.radius, Math.min(zone.y + zone.height - this.radius, this.y))
+      const margin = 1.0
+      this.x = Math.max(
+        zone.x + this.radius + margin,
+        Math.min(zone.x + zone.width - this.radius - margin, this.x),
+      )
+      this.y = Math.max(
+        zone.y + this.radius + margin,
+        Math.min(zone.y + zone.height - this.radius - margin, this.y),
+      )
     } else if (this.exitingQuarantine && this.quarantineZone) {
       const zone = this.quarantineZone
       this.x += this.dx * 1.5
@@ -219,13 +337,11 @@ class Person {
       this.x += this.dx
       this.y += this.dy
 
-      // Проверка на залипание
       if (this.x === prevX && this.y === prevY) {
         this.dx = (Math.random() - 0.5) * 2
         this.dy = (Math.random() - 0.5) * 2
       }
 
-      // Отскок от границ холста
       if (this.x < this.radius) {
         this.x = this.radius
         this.dx = Math.abs(this.dx) * (0.9 + Math.random() * 0.2)
@@ -243,7 +359,6 @@ class Person {
       }
     }
   }
-
   // Проверка на смерть (в базовом классе всегда false)
   checkDeath(): boolean {
     return false
@@ -263,8 +378,19 @@ class Person {
       this.status = 'infected'
       this.infectionTime = Date.now()
 
-      // 50% шанс попасть в карантин
-      if (Math.random() < 0.4) {
+      // Если персонаж уже двигался в карантин (синий)
+      if (this.movingToQuarantine) {
+        // Отменяем текущее движение
+        this.movingToQuarantine = false
+        this.avoidancePoints = []
+        this.currentAvoidancePoint = undefined
+
+        // Начинаем движение в зеленый карантин
+        this.inQuarantine = true
+        const greenRect = { x: 500, y: 250, width: 150, height: 100 }
+        const blueRect = { x: 150, y: 150, width: 150, height: 100 }
+        this.startMovingToQuarantine(greenRect, [blueRect])
+      } else if (Math.random() < 0.4) {
         this.inQuarantine = true
       }
 
@@ -272,7 +398,6 @@ class Person {
     }
     return false
   }
-
   // Начать движение в карантин
   startMovingToQuarantine(
     zone: { x: number; y: number; width: number; height: number },
@@ -395,7 +520,6 @@ class Person {
   calculateAvoidancePath(zone: { x: number; y: number; width: number; height: number }) {
     this.avoidancePoints = []
 
-    // Проверяем все зоны, которые нужно обходить
     for (const otherZone of this.otherQuarantineZones) {
       if (
         this.lineIntersectsRect(
@@ -410,28 +534,30 @@ class Person {
         const dx = this.quarantineTarget!.x - this.x
         const dy = this.quarantineTarget!.y - this.y
 
-        // Выбираем сторону обхода в зависимости от направления движения
+        // Для верхней границы добавляем дополнительное смещение
+        const topAvoidanceY = otherZone.y - 30 // Увеличиваем отступ сверху
+
         if (Math.abs(dx) > Math.abs(dy)) {
           // Горизонтальное движение - обходим сверху или снизу
           if (dy > 0) {
             // Движение вниз - обходим снизу
             this.avoidancePoints.push({
               x: this.x,
-              y: otherZone.y + otherZone.height + 20,
+              y: otherZone.y + otherZone.height + 30,
             })
             this.avoidancePoints.push({
               x: this.quarantineTarget!.x,
-              y: otherZone.y + otherZone.height + 20,
+              y: otherZone.y + otherZone.height + 30,
             })
           } else {
-            // Движение вверх - обходим сверху
+            // Движение вверх - обходим сверху с увеличенным отступом
             this.avoidancePoints.push({
               x: this.x,
-              y: otherZone.y - 20,
+              y: topAvoidanceY,
             })
             this.avoidancePoints.push({
               x: this.quarantineTarget!.x,
-              y: otherZone.y - 20,
+              y: topAvoidanceY,
             })
           }
         } else {
@@ -439,29 +565,28 @@ class Person {
           if (dx > 0) {
             // Движение вправо - обходим справа
             this.avoidancePoints.push({
-              x: otherZone.x + otherZone.width + 20,
+              x: otherZone.x + otherZone.width + 30,
               y: this.y,
             })
             this.avoidancePoints.push({
-              x: otherZone.x + otherZone.width + 20,
+              x: otherZone.x + otherZone.width + 30,
               y: this.quarantineTarget!.y,
             })
           } else {
             // Движение влево - обходим слева
             this.avoidancePoints.push({
-              x: otherZone.x - 20,
+              x: otherZone.x - 30,
               y: this.y,
             })
             this.avoidancePoints.push({
-              x: otherZone.x - 20,
+              x: otherZone.x - 30,
               y: this.quarantineTarget!.y,
             })
           }
         }
 
-        // Устанавливаем первую точку обхода как текущую цель
         this.currentAvoidancePoint = this.avoidancePoints.shift()
-        break // Обходим только одну зону за раз
+        break
       }
     }
   }
@@ -1073,12 +1198,12 @@ export default {
         count: number,
       ) => {
         ctx.fillStyle = fillColor
+        ctx.font = '14px Arial'
         ctx.fillRect(legendX, y, 15, 15)
         ctx.strokeStyle = color
         ctx.strokeRect(legendX, y, 15, 15)
         ctx.fillStyle = '#000'
         ctx.fillText(`${text}: ${count}`, legendX + 20, y + 12)
-        ctx.font = '14px Arial'
       }
 
       // Рисуем все элементы легенды
