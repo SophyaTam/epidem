@@ -367,7 +367,7 @@ class Person {
         const greenRect = { x: 500, y: 250, width: 150, height: 100 }
         const blueRect = { x: 150, y: 150, width: 150, height: 100 }
         this.startMovingToQuarantine(greenRect, [blueRect])
-      } else if (Math.random() < 0.5) {
+      } else if (Math.random() < 0.55) {
         // 40% шанс попасть в карантин при заражении
         this.inQuarantine = true
       }
