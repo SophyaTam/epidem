@@ -367,7 +367,7 @@ class Person {
         const greenRect = { x: 500, y: 250, width: 150, height: 100 }
         const blueRect = { x: 150, y: 150, width: 150, height: 100 }
         this.startMovingToQuarantine(greenRect, [blueRect])
-      } else if (Math.random() < 0.4) {
+      } else if (Math.random() < 0.5) {
         // 40% шанс попасть в карантин при заражении
         this.inQuarantine = true
       }
@@ -616,9 +616,9 @@ export default {
       animationId: 0, // ID анимации симуляции
       chartAnimationId: 0, // ID анимации графика
       isRunning: false, // Флаг работы симуляции
-      infectionDistance: 25, // Дистанция заражения
-      infectionChance: 0.3, // Вероятность заражения
-      recoveryTime: 15000, // Время выздоровления в мс
+      infectionDistance: 15, // Дистанция заражения
+      infectionChance: 0.15, // Вероятность заражения
+      recoveryTime: 14000, // Время выздоровления в мс
       pauseTime: 0, // Время паузы
       timeOffset: 0, // Смещение времени при паузе
       isChartPaused: false, // Флаг паузы графика
@@ -755,7 +755,7 @@ export default {
     // Создание персонажей
     createPersons() {
       this.persons = []
-      const count = 300
+      const count = 200
       const canvas = this.$refs.simulationCanvas as HTMLCanvasElement
 
       for (let i = 0; i < count; i++) {
