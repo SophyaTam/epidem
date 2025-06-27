@@ -17,8 +17,8 @@
     <!-- Панель управления симуляцией -->
     <div class="controls">
       <!-- Кнопки управления -->
-      <button @click="startSimulation">Старт</button>
-      <button @click="stopSimulation">Стоп</button>
+      <button @click="startSimulation" title="Запустить симуляцию">Старт</button>
+      <button @click="stopSimulation" title="Остановить симуляцию">Стоп</button>
     </div>
   </div>
 </template>
@@ -1296,64 +1296,191 @@ export default {
 <style scoped>
 /* Основные стили компонента */
 .simulation-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+  border-radius: 12px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  padding: 20px 30px; /* Уменьшил верхний отступ */
+  max-width: 1300px;
+  margin: 10px auto; /* Уменьшил внешний отступ */
 }
 
-/* Контейнер для основного содержимого */
+h1 {
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 20px; /* Уменьшил отступ */
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
 .content-wrapper {
   display: flex;
-  gap: 20px;
-  align-items: center;
+  gap: 30px;
+  align-items: flex-start;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* Стили для поля симуляции */
 .simulation-field {
-  border: 1px solid #817b7b;
-  background-color: #f5f5f5;
+  border: 2px solid #e0e0e0;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
 }
 
-/* Стили для контейнера графика */
 .chart-container {
-  border: 1px solid #817b7b;
+  border: 2px solid #e0e0e0;
   background-color: white;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-/* Стиль для холста графика */
 .chart-field {
   display: block;
 }
 
 /* Стили для панели управления */
 .controls {
-  margin-top: 15px;
+  margin-top: 20px; /* Уменьшил отступ */
+  margin-bottom: 10px; /* Добавил отступ снизу */
   display: flex;
-  gap: 10px;
+  gap: 15px;
+  justify-content: center;
 }
 
 .controls button {
-  padding: 8px 16px;
+  padding: 10px 25px;
   font-size: 1em;
   cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Центрируем текст */
 }
 
-/* Общие стили для кнопок */
-button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
+/* Убрал псевдоэлементы с иконками */
+.controls button::before {
+  content: none !important;
+}
+
+.controls button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.controls button:active {
+  transform: translateY(0);
+}
+
+button:nth-child(1) {
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
   color: white;
 }
 
-/* Индивидуальные стили кнопок */
-button:nth-child(1) {
-  background: #4caf50;
-} /* Старт - зеленый */
 button:nth-child(2) {
-  background: #f44336;
-} /* Стоп - красный */
+  background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
+  color: white;
+}
+
+.simulation-container {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+canvas:hover {
+  cursor: pointer;
+}
+
+@media (max-width: 1200px) {
+  .content-wrapper {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .simulation-field,
+  .chart-container {
+    width: 100%;
+    height: auto;
+  }
+
+  canvas {
+    max-width: 100%;
+    height: auto !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .controls {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  button {
+    width: 100%;
+  }
+}
+
+.stats-panel {
+  display: flex;
+  justify-content: space-around;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  min-width: 100px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.healthy {
+  background-color: rgba(0, 0, 255, 0.1);
+  border-left: 4px solid blue;
+}
+.infected {
+  background-color: rgba(0, 255, 0, 0.1);
+  border-left: 4px solid green;
+}
+.immune {
+  background-color: rgba(255, 165, 0, 0.1);
+  border-left: 4px solid orange;
+}
+.dead {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-left: 4px solid black;
+}
 </style>
