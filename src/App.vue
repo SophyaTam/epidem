@@ -66,13 +66,13 @@ class Person {
   getColor() {
     switch (this.status) {
       case 'infected':
-        return 'green'
+        return '#e74c3c'
       case 'immune':
-        return 'orange'
+        return '#2ecc71'
       case 'dead':
         return 'black'
       default:
-        return 'blue'
+        return '#2980b9'
     }
   }
 
@@ -634,17 +634,16 @@ export default {
       maxHistoryLength: 100, // Максимальная длина истории
       // Цвета для графика
       chartColors: {
-        healthy: 'rgba(0, 0, 255, 0.7)',
-        infected: 'rgba(0, 255, 0, 0.7)',
-        immune: 'rgba(255, 165, 0, 0.7)',
-        dead: 'rgba(0, 0, 0, 0.7)',
+        healthy: 'rgba(52, 152, 219, 0.7)',
+        infected: 'rgba(231, 76, 60, 0.7)',
+        immune: 'rgba(46, 204, 113, 0.7)',
+        dead: 'rgba(34, 34, 34, 0.7)',
       },
-      // Цвета заливки для графика
       fillColors: {
-        healthy: 'rgba(0, 0, 255, 0.2)',
-        infected: 'rgba(0, 255, 0, 0.2)',
-        immune: 'rgba(255, 165, 0, 0.2)',
-        dead: 'rgba(0, 0, 0, 0.2)',
+        healthy: 'rgba(52, 152, 219, 0.2)',
+        infected: 'rgba(231, 76, 60, 0.2)',
+        immune: 'rgba(46, 204, 113, 0.2)',
+        dead: 'rgba(34, 34, 34, 0.2)',
       },
       blueRect: { x: 150, y: 150, width: 150, height: 100 }, // Карантин для здоровых
       greenRect: { x: 500, y: 250, width: 150, height: 100 }, // Карантин для зараженных
@@ -712,9 +711,9 @@ export default {
         height: 100,
       }
 
-      ctx.fillStyle = 'rgba(0, 255, 0, 0.3)'
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.3)' // Красный с прозрачностью 30%
       ctx.fillRect(500, 250, 150, 100)
-      ctx.strokeStyle = 'green'
+      ctx.strokeStyle = 'red'
       ctx.lineWidth = 2
       ctx.strokeRect(500, 250, 150, 100)
     },
