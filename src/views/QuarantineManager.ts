@@ -34,10 +34,10 @@ export class QuarantineManager {
   drawRectangles(ctx: CanvasRenderingContext2D) {
     // Синий прямоугольник (для здоровых)
     ctx.fillStyle = 'rgba(0, 0, 255, 0.3)'
-    ctx.fillRect(this.blueRect.x, this.blueRect.y, this.blueRect.width, this.blueRect.height)
+    ctx.fillRect(this.blueRect.x, this.blueRect.y, this.blueRect.width, this.blueRect.height) // рисует закрашенный прямоугольник на холсте
     ctx.strokeStyle = 'blue'
     ctx.lineWidth = 2
-    ctx.strokeRect(this.blueRect.x, this.blueRect.y, this.blueRect.width, this.blueRect.height)
+    ctx.strokeRect(this.blueRect.x, this.blueRect.y, this.blueRect.width, this.blueRect.height) //рисования контура прямоугольника
 
     // Красный прямоугольник (для зараженных)
     ctx.fillStyle = 'rgba(255, 0, 0, 0.3)'
@@ -66,8 +66,9 @@ export class QuarantineManager {
   private isPointInRect(
     x: number,
     y: number,
-    rect: { x: number; y: number; width: number; height: number },
+    rect: { x: number; y: number; width: number; height: number }, //Объект прямоугольника с параметрами
   ): boolean {
+    // Проверяем, что точка находится правее левой границы И левее правой границы И ниже верхней границы И выше нижней границы
     return x > rect.x && x < rect.x + rect.width && y > rect.y && y < rect.y + rect.height
   }
 
@@ -75,13 +76,14 @@ export class QuarantineManager {
     x: number,
     y: number,
     rect: { x: number; y: number; width: number; height: number },
-    distance: number,
+    distance: number, //Расстояние от границ прямоугольника, в пределах которого точка считается "близкой"
   ): boolean {
     return (
-      x > rect.x - distance &&
-      x < rect.x + rect.width + distance &&
-      y > rect.y - distance &&
-      y < rect.y + rect.height + distance
+      // Проверяем расширенную область вокруг прямоугольника:
+      x > rect.x - distance && // Левая граница расширенная на distance
+      x < rect.x + rect.width + distance && // Правая граница расширенная на distance
+      y > rect.y - distance && // Верхняя граница расширенная на distance
+      y < rect.y + rect.height + distance // Нижняя граница расширенная на distance
     )
   }
 }
