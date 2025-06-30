@@ -154,7 +154,9 @@ export default {
 
     updatePositions() {
       //вызывается через цикл анимации
-      if (!this.isRunning) return
+      if (!this.isRunning) {
+        return
+      }
       const currentTime = Date.now() - (this.isRunning ? 0 : this.timeOffset) //учитывает время паузы (корректируется через timeOffset)
       const canvas = this.$refs.simulationCanvas as HTMLCanvasElement
       //Проверка выздоровления и смерти
@@ -322,7 +324,7 @@ export default {
       // Если симуляция на паузе (isRunning = false), вычитаем timeOffset,
       // чтобы время в истории не увеличивалось во время паузы
       // Если симуляция запущена, берем текущее время без изменений
-      const currentTime = Date.now() - (this.isRunning ? 0 : this.timeOffset)
+      const currentTime = Date.now() - this.timeOffset
       // Проверяем, не превысила ли история максимально допустимую длину
       // Если да - удаляем самую старую запись (первый элемент массива)
       if (this.history.length >= this.maxHistoryLength) {

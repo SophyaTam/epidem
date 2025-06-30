@@ -100,13 +100,14 @@ export class ChartManager {
     this.ctx.stroke() // Отрисовываем линии
 
     // Подписи осей
-    this.ctx.font = '12px Arial'
+    this.ctx.font = '10 px Arial'
     this.ctx.fillStyle = '#000'
     this.ctx.save() // Сохраняем текущее состояние контекста
     this.ctx.translate(10, this.canvas.height / 2) // Смещаем начало координат
     this.ctx.rotate(-Math.PI / 2) // Поворачиваем на 90 градусов против часовой
     this.ctx.fillText('Количество людей', 0, 0)
     this.ctx.restore() // Восстанавливаем состояние контекста
+    this.ctx.fillText('Время(мс)', this.canvas.width / 2.5, this.canvas.height - 10)
   }
 
   private drawYAxisLabels(padding: number, chartHeight: number, totalPeople: number) {

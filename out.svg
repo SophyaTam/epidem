@@ -1,0 +1,231 @@
+<svg version="1.1" baseProfile="full" width="1164.0" height="888.0" viewBox="0 0 1164 888" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events">
+<desc >#.interface: fill=lightblue
+#.enumeration: fill=lightgreen
+#.type: fill=lightgray
+
+[ChartManager|-ctx: CanvasRenderingContext2D;-canvas: HTMLCanvasElement;-colors: { healthy: string; infected: string; immune: string; dead: string; };-fillColors: { healthy: string; infected: string; immune: string; dead: string; };-maxHistoryLength: number|+init(): void;+clearCanvas(): void;+drawBorder(): void;+drawChart(): void;-drawAxes(): void;-drawYAxisLabels(): void;-drawAreas(): void;-drawLegend(): void]
+[Person|+x: number;+y: number;+dx: number;+dy: number;+radius: number;+color: string;+status: &quot;healthy&quot; \| &quot;infected&quot; \| &quot;immune&quot; \| &quot;dead&quot;;+infectionTime?: number;+inQuarantine: boolean;+quarantineZone?: { x: number; y: number; width: number; height: number; };+exitingQuarantine: boolean;+movingToQuarantine: boolean;+quarantineTarget?: { x: number; y: number; };+avoidancePoints: { x: number; y: number; }\[\];+currentAvoidancePoint?: { x: number; y: number; };+otherQuarantineZones: { x: number; y: number; width: number; height: number; }\[\];+lastBounceTime: number|+getColor(): &quot;\#e74c3c&quot; \| &quot;\#2ecc71&quot; \| &quot;black&quot; \| &quot;\#2980b9&quot;;+isPointInRect(): boolean;+update(): void;+checkDeath(): boolean;+draw(): void;+infect(): boolean;+startMovingToQuarantine(): void;+checkRecovery(): boolean;+lineIntersectsRect(): boolean;+lineIntersectsLine(): boolean;+calculateAvoidancePath(): void]
+[InfectedPerson||]
+[ImmunePerson||]
+[Person]&lt;:-[InfectedPerson]
+[Person]&lt;:-[ImmunePerson]
+[QuarantineManager|-blueRect: { x: number; y: number; width: number; height: number; };-greenRect: { x: number; y: number; width: number; height: number; }|+isPointInRectangles(): boolean;+isPointNearRectangles(): boolean;+drawRectangles(): void;+getHealthyZone(): { x: number; y: number; width: number; height: number; };+getInfectedZone(): { x: number; y: number; width: number; height: number; };-isPointInRect(): boolean;-isPointNearRect(): boolean]</desc>
+<g stroke-width="1.0" text-align="left" font="12pt Helvetica, Arial, sans-serif" font-size="12pt" font-family="Helvetica" font-weight="normal" font-style="normal">
+<g font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" stroke-width="3.0" stroke-linejoin="round" stroke-linecap="round" stroke="#33322E">
+<g stroke="transparent" fill="transparent">
+<rect x="0.0" y="0.0" height="888.0" width="1164.0" stroke="none"></rect>
+</g>
+<g transform="translate(8, 8)" fill="#33322E">
+<g transform="translate(20, 20)" fill="#eee8d5" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal">
+<path d="M461.8 757.0 L460.25 764 L460.25 784 L460.3 784.0 " fill="none"></path>
+<path d="M467.0 758.2 L461.8 757.0 L456.6 755.8 L464.7 744.0 Z"></path>
+<path d="M634.2 757.0 L635.75 764 L635.75 784 L635.8 784.0 " fill="none"></path>
+<path d="M639.4 755.8 L634.2 757.0 L629.0 758.2 L631.3 744.0 Z"></path>
+<g data-name="ChartManager">
+<g fill="#eee8d5" stroke="#33322E" data-name="ChartManager">
+<rect x="0.0" y="169.5" height="405.0" width="280.0" data-name="ChartManager"></rect>
+<path d="M0.0 201.5 L280.0 201.5" fill="none" data-name="ChartManager"></path>
+<path d="M0.0 428.5 L280.0 428.5" fill="none" data-name="ChartManager"></path>
+</g>
+<g transform="translate(0, 169.5)" font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="ChartManager" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ChartManager" data-compartment="0">
+<a id="src\views\ChartManager.ts.ChartManager" xlink:href="src\views\ChartManager.ts"><text x="132.0" y="14.1" stroke="none" text-anchor="middle" data-name="ChartManager" data-compartment="0">ChartManager</text></a>
+
+</g>
+</g>
+<g transform="translate(0, 201.5)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ChartManager" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ChartManager" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ChartManager" data-compartment="1">-ctx: CanvasRenderingContext2D</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ChartManager" data-compartment="1">-canvas: HTMLCanvasElement</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ChartManager" data-compartment="1">-colors: { healthy: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="ChartManager" data-compartment="1">infected: string</text>
+<text x="0.0" y="78.9" stroke="none" data-name="ChartManager" data-compartment="1">immune: string</text>
+<text x="0.0" y="95.1" stroke="none" data-name="ChartManager" data-compartment="1">dead: string</text>
+<text x="0.0" y="111.3" stroke="none" data-name="ChartManager" data-compartment="1">}</text>
+<text x="0.0" y="127.5" stroke="none" data-name="ChartManager" data-compartment="1">-fillColors: { healthy: string</text>
+<text x="0.0" y="143.7" stroke="none" data-name="ChartManager" data-compartment="1">infected: string</text>
+<text x="0.0" y="159.9" stroke="none" data-name="ChartManager" data-compartment="1">immune: string</text>
+<text x="0.0" y="176.1" stroke="none" data-name="ChartManager" data-compartment="1">dead: string</text>
+<text x="0.0" y="192.3" stroke="none" data-name="ChartManager" data-compartment="1">}</text>
+<text x="0.0" y="208.5" stroke="none" data-name="ChartManager" data-compartment="1">-maxHistoryLength: number</text>
+
+</g>
+</g>
+<g transform="translate(0, 428.5)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ChartManager" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ChartManager" data-compartment="2">
+<text x="0.0" y="14.1" stroke="none" data-name="ChartManager" data-compartment="2">+init(): void</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ChartManager" data-compartment="2">+clearCanvas(): void</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ChartManager" data-compartment="2">+drawBorder(): void</text>
+<text x="0.0" y="62.7" stroke="none" data-name="ChartManager" data-compartment="2">+drawChart(): void</text>
+<text x="0.0" y="78.9" stroke="none" data-name="ChartManager" data-compartment="2">-drawAxes(): void</text>
+<text x="0.0" y="95.1" stroke="none" data-name="ChartManager" data-compartment="2">-drawYAxisLabels(): void</text>
+<text x="0.0" y="111.3" stroke="none" data-name="ChartManager" data-compartment="2">-drawAreas(): void</text>
+<text x="0.0" y="127.5" stroke="none" data-name="ChartManager" data-compartment="2">-drawLegend(): void</text>
+
+</g>
+</g>
+</g>
+<g data-name="Person">
+<g fill="#eee8d5" stroke="#33322E" data-name="Person">
+<rect x="320.0" y="0.0" height="744.0" width="456.0" data-name="Person"></rect>
+<path d="M320.0 32.0 L776.0 32.0" fill="none" data-name="Person"></path>
+<path d="M320.0 550.0 L776.0 550.0" fill="none" data-name="Person"></path>
+</g>
+<g transform="translate(320, 0)" font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="Person" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Person" data-compartment="0">
+<a id="src\views\Person.ts.Person" xlink:href="src\views\Person.ts"><text x="220.0" y="14.1" stroke="none" text-anchor="middle" data-name="Person" data-compartment="0">Person</text></a>
+
+</g>
+</g>
+<g transform="translate(320, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Person" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Person" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Person" data-compartment="1">+x: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Person" data-compartment="1">+y: number</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Person" data-compartment="1">+dx: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Person" data-compartment="1">+dy: number</text>
+<text x="0.0" y="78.9" stroke="none" data-name="Person" data-compartment="1">+radius: number</text>
+<text x="0.0" y="95.1" stroke="none" data-name="Person" data-compartment="1">+color: string</text>
+<text x="0.0" y="111.3" stroke="none" data-name="Person" data-compartment="1">+status: &quot;healthy&quot; | &quot;infected&quot; | &quot;immune&quot; | &quot;dead&quot;</text>
+<text x="0.0" y="127.5" stroke="none" data-name="Person" data-compartment="1">+infectionTime?: number</text>
+<text x="0.0" y="143.7" stroke="none" data-name="Person" data-compartment="1">+inQuarantine: boolean</text>
+<text x="0.0" y="159.9" stroke="none" data-name="Person" data-compartment="1">+quarantineZone?: { x: number</text>
+<text x="0.0" y="176.1" stroke="none" data-name="Person" data-compartment="1">y: number</text>
+<text x="0.0" y="192.3" stroke="none" data-name="Person" data-compartment="1">width: number</text>
+<text x="0.0" y="208.5" stroke="none" data-name="Person" data-compartment="1">height: number</text>
+<text x="0.0" y="224.7" stroke="none" data-name="Person" data-compartment="1">}</text>
+<text x="0.0" y="240.9" stroke="none" data-name="Person" data-compartment="1">+exitingQuarantine: boolean</text>
+<text x="0.0" y="257.1" stroke="none" data-name="Person" data-compartment="1">+movingToQuarantine: boolean</text>
+<text x="0.0" y="273.3" stroke="none" data-name="Person" data-compartment="1">+quarantineTarget?: { x: number</text>
+<text x="0.0" y="289.5" stroke="none" data-name="Person" data-compartment="1">y: number</text>
+<text x="0.0" y="305.7" stroke="none" data-name="Person" data-compartment="1">}</text>
+<text x="0.0" y="321.9" stroke="none" data-name="Person" data-compartment="1">+avoidancePoints: { x: number</text>
+<text x="0.0" y="338.1" stroke="none" data-name="Person" data-compartment="1">y: number</text>
+<text x="0.0" y="354.3" stroke="none" data-name="Person" data-compartment="1">}[]</text>
+<text x="0.0" y="370.5" stroke="none" data-name="Person" data-compartment="1">+currentAvoidancePoint?: { x: number</text>
+<text x="0.0" y="386.7" stroke="none" data-name="Person" data-compartment="1">y: number</text>
+<text x="0.0" y="402.9" stroke="none" data-name="Person" data-compartment="1">}</text>
+<text x="0.0" y="419.1" stroke="none" data-name="Person" data-compartment="1">+otherQuarantineZones: { x: number</text>
+<text x="0.0" y="435.3" stroke="none" data-name="Person" data-compartment="1">y: number</text>
+<text x="0.0" y="451.5" stroke="none" data-name="Person" data-compartment="1">width: number</text>
+<text x="0.0" y="467.7" stroke="none" data-name="Person" data-compartment="1">height: number</text>
+<text x="0.0" y="483.9" stroke="none" data-name="Person" data-compartment="1">}[]</text>
+<text x="0.0" y="500.1" stroke="none" data-name="Person" data-compartment="1">+lastBounceTime: number</text>
+
+</g>
+</g>
+<g transform="translate(320, 550)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Person" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Person" data-compartment="2">
+<text x="0.0" y="14.1" stroke="none" data-name="Person" data-compartment="2">+getColor(): &quot;#e74c3c&quot; | &quot;#2ecc71&quot; | &quot;black&quot; | &quot;#2980b9&quot;</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Person" data-compartment="2">+isPointInRect(): boolean</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Person" data-compartment="2">+update(): void</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Person" data-compartment="2">+checkDeath(): boolean</text>
+<text x="0.0" y="78.9" stroke="none" data-name="Person" data-compartment="2">+draw(): void</text>
+<text x="0.0" y="95.1" stroke="none" data-name="Person" data-compartment="2">+infect(): boolean</text>
+<text x="0.0" y="111.3" stroke="none" data-name="Person" data-compartment="2">+startMovingToQuarantine(): void</text>
+<text x="0.0" y="127.5" stroke="none" data-name="Person" data-compartment="2">+checkRecovery(): boolean</text>
+<text x="0.0" y="143.7" stroke="none" data-name="Person" data-compartment="2">+lineIntersectsRect(): boolean</text>
+<text x="0.0" y="159.9" stroke="none" data-name="Person" data-compartment="2">+lineIntersectsLine(): boolean</text>
+<text x="0.0" y="176.1" stroke="none" data-name="Person" data-compartment="2">+calculateAvoidancePath(): void</text>
+
+</g>
+</g>
+</g>
+<g data-name="InfectedPerson">
+<g fill="#eee8d5" stroke="#33322E" data-name="InfectedPerson">
+<rect x="392.3" y="784.0" height="48.0" width="136.0" data-name="InfectedPerson"></rect>
+<path d="M392.3 816.0 L528.3 816.0" fill="none" data-name="InfectedPerson"></path>
+<path d="M392.3 824.0 L528.3 824.0" fill="none" data-name="InfectedPerson"></path>
+</g>
+<g transform="translate(392.25, 784)" font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="InfectedPerson" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="InfectedPerson" data-compartment="0">
+<a id="src\views\Person.ts.InfectedPerson" xlink:href="src\views\Person.ts"><text x="60.0" y="14.1" stroke="none" text-anchor="middle" data-name="InfectedPerson" data-compartment="0">InfectedPerson</text></a>
+
+</g>
+</g>
+<g transform="translate(392.25, 816)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="InfectedPerson" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" data-name="InfectedPerson" data-compartment="1">
+
+</g>
+</g>
+<g transform="translate(392.25, 824)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="InfectedPerson" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="InfectedPerson" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ImmunePerson">
+<g fill="#eee8d5" stroke="#33322E" data-name="ImmunePerson">
+<rect x="568.3" y="784.0" height="48.0" width="135.0" data-name="ImmunePerson"></rect>
+<path d="M568.3 816.0 L703.3 816.0" fill="none" data-name="ImmunePerson"></path>
+<path d="M568.3 824.0 L703.3 824.0" fill="none" data-name="ImmunePerson"></path>
+</g>
+<g transform="translate(568.25, 784)" font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="ImmunePerson" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ImmunePerson" data-compartment="0">
+<a id="src\views\Person.ts.ImmunePerson" xlink:href="src\views\Person.ts"><text x="59.5" y="14.1" stroke="none" text-anchor="middle" data-name="ImmunePerson" data-compartment="0">ImmunePerson</text></a>
+
+</g>
+</g>
+<g transform="translate(568.25, 816)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ImmunePerson" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ImmunePerson" data-compartment="1">
+
+</g>
+</g>
+<g transform="translate(568.25, 824)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ImmunePerson" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ImmunePerson" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="QuarantineManager">
+<g fill="#eee8d5" stroke="#33322E" data-name="QuarantineManager">
+<rect x="816.0" y="137.5" height="469.0" width="292.0" data-name="QuarantineManager"></rect>
+<path d="M816.0 169.5 L1108.0 169.5" fill="none" data-name="QuarantineManager"></path>
+<path d="M816.0 347.5 L1108.0 347.5" fill="none" data-name="QuarantineManager"></path>
+</g>
+<g transform="translate(816, 137.5)" font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" data-name="QuarantineManager" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="QuarantineManager" data-compartment="0">
+<a id="src\views\QuarantineManager.ts.QuarantineManager" xlink:href="src\views\QuarantineManager.ts"><text x="138.0" y="14.1" stroke="none" text-anchor="middle" data-name="QuarantineManager" data-compartment="0">QuarantineManager</text></a>
+
+</g>
+</g>
+<g transform="translate(816, 169.5)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="QuarantineManager" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="QuarantineManager" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="QuarantineManager" data-compartment="1">-blueRect: { x: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="QuarantineManager" data-compartment="1">y: number</text>
+<text x="0.0" y="46.5" stroke="none" data-name="QuarantineManager" data-compartment="1">width: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="QuarantineManager" data-compartment="1">height: number</text>
+<text x="0.0" y="78.9" stroke="none" data-name="QuarantineManager" data-compartment="1">}</text>
+<text x="0.0" y="95.1" stroke="none" data-name="QuarantineManager" data-compartment="1">-greenRect: { x: number</text>
+<text x="0.0" y="111.3" stroke="none" data-name="QuarantineManager" data-compartment="1">y: number</text>
+<text x="0.0" y="127.5" stroke="none" data-name="QuarantineManager" data-compartment="1">width: number</text>
+<text x="0.0" y="143.7" stroke="none" data-name="QuarantineManager" data-compartment="1">height: number</text>
+<text x="0.0" y="159.9" stroke="none" data-name="QuarantineManager" data-compartment="1">}</text>
+
+</g>
+</g>
+<g transform="translate(816, 347.5)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="QuarantineManager" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="QuarantineManager" data-compartment="2">
+<text x="0.0" y="14.1" stroke="none" data-name="QuarantineManager" data-compartment="2">+isPointInRectangles(): boolean</text>
+<text x="0.0" y="30.3" stroke="none" data-name="QuarantineManager" data-compartment="2">+isPointNearRectangles(): boolean</text>
+<text x="0.0" y="46.5" stroke="none" data-name="QuarantineManager" data-compartment="2">+drawRectangles(): void</text>
+<text x="0.0" y="62.7" stroke="none" data-name="QuarantineManager" data-compartment="2">+getHealthyZone(): { x: number</text>
+<text x="0.0" y="78.9" stroke="none" data-name="QuarantineManager" data-compartment="2">y: number</text>
+<text x="0.0" y="95.1" stroke="none" data-name="QuarantineManager" data-compartment="2">width: number</text>
+<text x="0.0" y="111.3" stroke="none" data-name="QuarantineManager" data-compartment="2">height: number</text>
+<text x="0.0" y="127.5" stroke="none" data-name="QuarantineManager" data-compartment="2">}</text>
+<text x="0.0" y="143.7" stroke="none" data-name="QuarantineManager" data-compartment="2">+getInfectedZone(): { x: number</text>
+<text x="0.0" y="159.9" stroke="none" data-name="QuarantineManager" data-compartment="2">y: number</text>
+<text x="0.0" y="176.1" stroke="none" data-name="QuarantineManager" data-compartment="2">width: number</text>
+<text x="0.0" y="192.3" stroke="none" data-name="QuarantineManager" data-compartment="2">height: number</text>
+<text x="0.0" y="208.5" stroke="none" data-name="QuarantineManager" data-compartment="2">}</text>
+<text x="0.0" y="224.7" stroke="none" data-name="QuarantineManager" data-compartment="2">-isPointInRect(): boolean</text>
+<text x="0.0" y="240.9" stroke="none" data-name="QuarantineManager" data-compartment="2">-isPointNearRect(): boolean</text>
+
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>

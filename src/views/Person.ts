@@ -62,6 +62,10 @@ export class Person {
   update(canvasWidth: number, canvasHeight: number) {
     // Мертвые персонажи не двигаются
     if (this.status === 'dead') return
+    else if (Math.abs(this.dx) < 0.2 || Math.abs(this.dy) < 0.2) {
+      this.dx = Math.random() > 0.5 ? 0.5 : -0.5
+      this.dy = Math.random() > 0.5 ? 0.5 : -0.5
+    }
 
     // Логика перенаправления зараженных из синего карантина в зеленый
     if (
@@ -219,9 +223,8 @@ export class Person {
       const speed = Math.sqrt(this.dx * this.dx + this.dy * this.dy)
       const minQuarantineSpeed = 0.5
       if (speed < minQuarantineSpeed) {
-        const angle = Math.random() * Math.PI * 2
-        this.dx = minQuarantineSpeed * Math.cos(angle)
-        this.dy = minQuarantineSpeed * Math.sin(angle)
+        this.dx = 0.4
+        this.dy = 0.4
       }
 
       // Движение
@@ -275,8 +278,13 @@ export class Person {
     else if (this.exitingQuarantine && this.quarantineZone) {
       const zone = this.quarantineZone
       // Ускоренное движение при выходе
-      this.x += this.dx * 1.5
-      this.y += this.dy * 1.5
+      if (Math.abs(this.x) > 0.3 && Math.abs(this.y) > 0.3) {
+        this.x += this.dx * 1.5
+        this.y += this.dy * 1.5
+      } else {
+        this.x += 1.5
+        this.y += 1.5
+      }
 
       // Если полностью вышел из зоны карантина
       if (
