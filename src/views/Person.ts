@@ -273,7 +273,7 @@ export class Person {
         Math.min(zone.y + zone.height - this.radius - margin, this.y),
       )
     }
-    // Логика выхода из карантина
+
     // Логика выхода из карантина
     else if (this.exitingQuarantine && this.quarantineZone) {
       const zone = this.quarantineZone
@@ -283,20 +283,32 @@ export class Person {
       this.x += this.dx * exitSpeed
       this.y += this.dy * exitSpeed
 
-      // Расширенная проверка выхода
+      // Расширенная проверка выхода с учетом радиуса персонажа
+      const margin = this.radius * 2
       const fullyExited =
-        this.x < zone.x - this.radius * 2 ||
-        this.x > zone.x + zone.width + this.radius * 2 ||
-        this.y < zone.y - this.radius * 2 ||
-        this.y > zone.y + zone.height + this.radius * 2
+        this.x < zone.x - margin ||
+        this.x > zone.x + zone.width + margin ||
+        this.y < zone.y - margin ||
+        this.y > zone.y + zone.height + margin
 
       if (fullyExited) {
         this.inQuarantine = false
         this.exitingQuarantine = false
         this.quarantineZone = undefined
-        // Возвращаем нормальную скорость
-        this.dx = (Math.random() - 0.5) * 1.5
-        this.dy = (Math.random() - 0.5) * 1.5
+
+        // Задаем случайное направление с нормальной скоростью
+        const angle = Math.random() * Math.PI * 2
+        this.dx = Math.cos(angle) * 1.5
+        this.dy = Math.sin(angle) * 1.5
+      }
+
+      // Принудительный выход, если слишком долго пытается выйти
+      if (this.forceExitStarted && Date.now() - this.forceExitStarted > 2000) {
+        this.x += (Math.random() - 0.5) * 20 // Резкое смещение
+        this.y += (Math.random() - 0.5) * 20
+        this.inQuarantine = false
+        this.exitingQuarantine = false
+        this.quarantineZone = undefined
       }
     }
     // Обычное движение вне карантина

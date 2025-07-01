@@ -229,14 +229,13 @@ export default {
             // Если прошло больше 2 секунд (2000 мс) и персонаж еще не вышел
             if (currentTime - person.forceExitStarted > 2000) {
               // Принудительно выталкиваем персонажа
-              person.y += 5 // Более значительное смещение
+              person.y += 10 // Более значительное смещение
               person.x += Math.random() > 0.5 ? 5 : -5 // Добавляем горизонтальное смещение
 
               // Сбрасываем состояние карантина
               person.quarantineZone = undefined
               person.inQuarantine = false
               person.exitingQuarantine = false
-              delete person.forceExitStarted
             }
           }
         })
