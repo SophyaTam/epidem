@@ -192,13 +192,53 @@ export default {
         })
         this.sentHealthyToQuarantine = true //Флаг sentHealthyToQuarantine предотвращает повторную активацию
       }
-      //Деактивация карантина (при 0 зараженных)
+      // Деактивация карантина (при 0 зараженных)
       if (this.infectedCount === 0) {
         this.sentHealthyToQuarantine = false
+        const currentTime = Date.now() // Запоминаем текущее время один раз
+
         this.persons.forEach((person) => {
+          // Гарантированная скорость выхода
+          const exitSpeed = 2.5
+
+          // Если персонаж в карантине и не выходит
           if (person.inQuarantine && !person.exitingQuarantine) {
+            // Если скорость близка к нулю - задаем случайное направление
+            if (Math.abs(person.dx) < 0.1 && Math.abs(person.dy) < 0.1) {
+              const angle = Math.random() * Math.PI * 2
+              person.dx = exitSpeed * Math.cos(angle)
+              person.dy = exitSpeed * Math.sin(angle)
+            }
+            // Иначе увеличиваем текущую скорость, сохраняя направление
+            else {
+              const speed = Math.sqrt(person.dx * person.dx + person.dy * person.dy)
+              const boostFactor = exitSpeed / speed
+              person.dx *= boostFactor
+              person.dy *= boostFactor
+            }
+
+            // Устанавливаем флаги выхода
             person.exitingQuarantine = true
             person.inQuarantine = false
+
+            // Добавляем метку времени начала выхода
+            person.forceExitStarted = currentTime
+          }
+
+          // Для уже выходящих персонажей проверяем время
+          else if (person.exitingQuarantine && person.forceExitStarted) {
+            // Если прошло больше 2 секунд (2000 мс) и персонаж еще не вышел
+            if (currentTime - person.forceExitStarted > 2000) {
+              // Принудительно выталкиваем персонажа
+              person.y += 5 // Более значительное смещение
+              person.x += Math.random() > 0.5 ? 5 : -5 // Добавляем горизонтальное смещение
+
+              // Сбрасываем состояние карантина
+              person.quarantineZone = undefined
+              person.inQuarantine = false
+              person.exitingQuarantine = false
+              delete person.forceExitStarted
+            }
           }
         })
       }

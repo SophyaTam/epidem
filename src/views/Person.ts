@@ -16,6 +16,7 @@ export class Person {
   currentAvoidancePoint?: { x: number; y: number } // Текущая точка обхода
   otherQuarantineZones: { x: number; y: number; width: number; height: number }[] // Другие карантинные зоны
   lastBounceTime: number // Время последнего отскока от стенки
+  forceExitStarted: number | undefined
 
   constructor(x: number, y: number) {
     // Инициализация свойств
@@ -220,9 +221,7 @@ export class Person {
       }
 
       // Проверяем минимальную скорость
-      const speed = Math.sqrt(this.dx * this.dx + this.dy * this.dy)
-      const minQuarantineSpeed = 0.5
-      if (speed < minQuarantineSpeed) {
+      if (Math.abs(this.dx) < 0.3 && Math.abs(this.dy) < 0.3) {
         this.dx = 0.4
         this.dy = 0.4
       }
@@ -255,7 +254,7 @@ export class Person {
 
         // Проверка минимальной скорости после отскока
         const minSpeedAfterBounce = 1.2
-        const currentSpeed = Math.sqrt(this.dx * this.dx + this.dy * this.dy)
+        const currentSpeed = Math.abs(this.dx * this.dy)
         if (currentSpeed < minSpeedAfterBounce) {
           const angle = Math.atan2(this.dy, this.dx) // Вычисляем текущий угол движения
           this.dx = minSpeedAfterBounce * Math.cos(angle) // Устанавливаем новую скорость с сохранением направления
@@ -275,28 +274,29 @@ export class Person {
       )
     }
     // Логика выхода из карантина
+    // Логика выхода из карантина
     else if (this.exitingQuarantine && this.quarantineZone) {
       const zone = this.quarantineZone
-      // Ускоренное движение при выходе
-      if (Math.abs(this.x) > 0.3 && Math.abs(this.y) > 0.3) {
-        this.x += this.dx * 1.5
-        this.y += this.dy * 1.5
-      } else {
-        this.x += 1.5
-        this.y += 1.5
-      }
+      const exitSpeed = 2.0 // Увеличиваем скорость выхода
 
-      // Если полностью вышел из зоны карантина
-      if (
-        this.x < zone.x - this.radius || // Проверка выхода за ЛЕВУЮ границу
-        this.x > zone.x + zone.width + this.radius || // Проверка выхода за ПРАВУЮ границу
-        this.y < zone.y - this.radius || // Проверка выхода за ВЕРХНЮЮ границу
-        this.y > zone.y + zone.height + this.radius // Проверка выхода за НИЖНЮЮ границу
-      ) {
-        // Если объект полностью вышел - сбрасываем все карантинные флаги:
-        this.inQuarantine = false // Больше не в карантине
-        this.exitingQuarantine = false // Процесс выхода завершен
-        this.quarantineZone = undefined // Сбрасываем ссылку на зону
+      // Ускоренное движение в направлении выхода
+      this.x += this.dx * exitSpeed
+      this.y += this.dy * exitSpeed
+
+      // Расширенная проверка выхода
+      const fullyExited =
+        this.x < zone.x - this.radius * 2 ||
+        this.x > zone.x + zone.width + this.radius * 2 ||
+        this.y < zone.y - this.radius * 2 ||
+        this.y > zone.y + zone.height + this.radius * 2
+
+      if (fullyExited) {
+        this.inQuarantine = false
+        this.exitingQuarantine = false
+        this.quarantineZone = undefined
+        // Возвращаем нормальную скорость
+        this.dx = (Math.random() - 0.5) * 1.5
+        this.dy = (Math.random() - 0.5) * 1.5
       }
     }
     // Обычное движение вне карантина
@@ -421,7 +421,10 @@ export class Person {
       if (this.inQuarantine) {
         this.exitingQuarantine = true
         this.movingToQuarantine = false
-
+        // Гарантированно задаем скорость выхода
+        const exitSpeed = 1.5
+        this.dx = (Math.random() > 0.5 ? exitSpeed : -exitSpeed) * (Math.random() * 0.5 + 0.5)
+        this.dy = (Math.random() > 0.5 ? exitSpeed : -exitSpeed) * (Math.random() * 0.5 + 0.5)
         // Направляем персонажа к выходу из карантинной зоны
         if (this.quarantineZone) {
           // Выбираем случайное направление для выхода
