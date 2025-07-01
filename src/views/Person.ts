@@ -63,7 +63,10 @@ export class Person {
   update(canvasWidth: number, canvasHeight: number) {
     // Мертвые персонажи не двигаются
     if (this.status === 'dead') return
-    else if (Math.abs(this.dx) < 0.2 || Math.abs(this.dy) < 0.2) {
+
+    if (Math.abs(this.dx) < 0.1) {
+      this.dx = 0.5
+    } else if (Math.abs(this.dx) < 0.2 || Math.abs(this.dy) < 0.2) {
       this.dx = Math.random() > 0.5 ? 0.5 : -0.5
       this.dy = Math.random() > 0.5 ? 0.5 : -0.5
     }

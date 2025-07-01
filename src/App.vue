@@ -238,6 +238,16 @@ export default {
               person.exitingQuarantine = false
             }
           }
+          if (
+            person.forceExitStarted &&
+            currentTime - person.forceExitStarted > 3000 &&
+            person.x > 150 &&
+            person.x < 300 &&
+            person.y > 150 &&
+            person.y < 250
+          ) {
+            person.x -= 15
+          }
         })
       }
 
