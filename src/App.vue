@@ -159,6 +159,7 @@ export default {
       }
       const currentTime = Date.now() - (this.isRunning ? 0 : this.timeOffset) //учитывает время паузы (корректируется через timeOffset)
       const canvas = this.$refs.simulationCanvas as HTMLCanvasElement
+
       //Проверка выздоровления и смерти
       this.persons.forEach((person) => {
         if (person.status === 'infected') {
@@ -209,13 +210,6 @@ export default {
               person.dx = exitSpeed * Math.cos(angle)
               person.dy = exitSpeed * Math.sin(angle)
             }
-            // Иначе увеличиваем текущую скорость, сохраняя направление
-            else {
-              const speed = Math.sqrt(person.dx * person.dx + person.dy * person.dy)
-              const boostFactor = exitSpeed / speed
-              person.dx *= boostFactor
-              person.dy *= boostFactor
-            }
 
             // Устанавливаем флаги выхода
             person.exitingQuarantine = true
@@ -228,7 +222,7 @@ export default {
           // Для уже выходящих персонажей проверяем время
           else if (person.exitingQuarantine && person.forceExitStarted) {
             // Если прошло больше 2 секунд (2000 мс) и персонаж еще не вышел
-            if (currentTime - person.forceExitStarted > 2000) {
+            if (currentTime - person.forceExitStarted > 1500) {
               // Принудительно выталкиваем персонажа
               person.y += 5 // Более значительное смещение
               person.x += Math.random() > 0.5 ? 5 : -5 // Добавляем горизонтальное смещение
