@@ -75,7 +75,6 @@ export default {
   },
 
   mounted() {
-    this.initSimulation()
     this.createPersons()
     this.initChart()
     this.drawPersons()
@@ -431,7 +430,13 @@ export default {
 
     startSimulation() {
       if (this.isRunning) return // Если симуляция уже запущена, ничего не делаем
-
+      this.initSimulation()
+      // Сбрасываем время заражения для всех инфицированных
+      this.persons.forEach((person) => {
+        if (person.status === 'infected') {
+          person.infectionTime = Date.now()
+        }
+      })
       if (this.pauseTime > 0) {
         // Если была пауза (pauseTime > 0), корректируем временные параметры
         const pauseDuration = Date.now() - this.pauseTime // Вычисляем длительность паузы в миллисекундах
@@ -455,27 +460,32 @@ export default {
 <style scoped>
 /* Основные стили компонента */
 .simulation-container {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
-  border-radius: 12px;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-  padding: 20px 30px; /* Уменьшил верхний отступ */
-  max-width: 1300px;
-  margin: 10px auto; /* Уменьшил внешний отступ */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /*Шрифт для всего контейнера*/
+  background: linear-gradient(
+    135deg,
+    #f5f7fa 0%,
+    #e4e8eb 100%
+  ); /* Градиентный фон от светло-серого к серому */
+  border-radius: 12px; /* Скругленные углы */
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); /* Тень с размытием 20px */
+  padding: 20px 30px; /* Внутренние отступы: 20px сверху/снизу, 30px слева/справа */
+  max-width: 1300px; /* Максимальная ширина контейнера */
+  margin: 10px auto; /* Внешние отступы: 10px сверху/снизу, автоматически по бокам (центрирование) */
 }
 
 h1 {
+  /* Стили для заголовка h1 */
   color: #2c3e50;
   text-align: center;
-  margin-bottom: 20px; /* Уменьшил отступ */
+  margin-bottom: 20px;
   font-weight: 600;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .content-wrapper {
-  display: flex;
+  display: flex; /* Контейнер для основного содержимого */
   gap: 30px;
-  align-items: flex-start;
+  align-items: flex-start; /* Выравнивание элементов по верхнему краю */
   background: white;
   padding: 20px;
   border-radius: 10px;
@@ -483,6 +493,7 @@ h1 {
 }
 
 .simulation-field {
+  /* Стили для поля симуляции */
   border: 2px solid #e0e0e0;
   background-color: #f9f9f9;
   border-radius: 8px;
@@ -490,7 +501,8 @@ h1 {
 }
 
 .chart-container {
-  border: 2px solid #e0e0e0;
+  /* Контейнер для графика */
+  border: 2px solid #e0e0e0; /* Серая рамка */
   background-color: white;
   border-radius: 8px;
   padding: 10px;
@@ -498,16 +510,16 @@ h1 {
 }
 
 .chart-field {
-  display: block;
+  display: block; /* Блочное отображение */
 }
 
 /* Стили для панели управления */
 .controls {
-  margin-top: 20px; /* Уменьшил отступ */
-  margin-bottom: 10px; /* Добавил отступ снизу */
+  margin-top: 20px;
+  margin-bottom: 10px; /* отступ снизу */
   display: flex;
   gap: 15px;
-  justify-content: center;
+  justify-content: center; /* Центрирование по горизонтали */
 }
 
 .controls button {
@@ -517,25 +529,27 @@ h1 {
   border: none;
   border-radius: 6px;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease; /* Плавные анимации */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: center; /* Центрируем текст */
 }
 
-/* Убрал псевдоэлементы с иконками */
+/* псевдоэлементы с иконками */
 .controls button::before {
   content: none !important;
 }
 
 .controls button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  /* Эффекты при наведении на кнопку */
+  transform: translateY(-2px); /* Смещение вверх */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Увеличенная тень */
 }
 
 .controls button:active {
-  transform: translateY(0);
+  /* Эффект при нажатии кнопки */
+  transform: translateY(0); /* Возврат в исходное положение */
 }
 
 button:nth-child(1) {
@@ -549,10 +563,12 @@ button:nth-child(2) {
 }
 
 .simulation-container {
+  /* Анимация появления контейнера */
   animation: fadeIn 0.5s ease-out;
 }
 
 @keyframes fadeIn {
+  /* Определение анимации fadeIn плавное появление */
   from {
     opacity: 0;
     transform: translateY(20px);
@@ -564,28 +580,31 @@ button:nth-child(2) {
 }
 
 canvas:hover {
+  /* Стиль курсора при наведении на canvas */
   cursor: pointer;
 }
 
 @media (max-width: 1200px) {
+  /* Адаптивные стили для экранов до 1200px */
   .content-wrapper {
-    flex-direction: column;
-    align-items: center;
+    flex-direction: column; /* Колонки вместо строки */
+    align-items: center; /* Центрирование */
   }
 
   .simulation-field,
   .chart-container {
-    width: 100%;
-    height: auto;
+    width: 100%; /* Полная ширина */
+    height: auto; /* Автоматическая высота */
   }
 
   canvas {
-    max-width: 100%;
-    height: auto !important;
+    max-width: 100%; /* Максимальная ширина */
+    height: auto !important; /* Автоматическая высота (с !important для переопределения) */
   }
 }
 
 @media (max-width: 600px) {
+  /* Адаптивные стили для экранов до 600px */
   .controls {
     flex-direction: column;
     width: 100%;
@@ -597,7 +616,8 @@ canvas:hover {
 }
 
 .stats-panel {
-  display: flex;
+  /* Стили панели статистики */
+  display: flex; /* Распределение элементов по пространству */
   justify-content: space-around;
   background: white;
   padding: 15px;
@@ -607,8 +627,9 @@ canvas:hover {
 }
 
 .stat-item {
+  /* Элемент статистики */
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* Вертикальное расположение */
   align-items: center;
   padding: 10px 20px;
   border-radius: 8px;
@@ -616,17 +637,20 @@ canvas:hover {
 }
 
 .stat-value {
+  /* Значение статистики */
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 700; /* Жирное начертание */
   margin-bottom: 5px;
 }
 
 .stat-label {
+  /* Подпись статистики */
   font-size: 14px;
   opacity: 0.8;
 }
 
 .healthy {
+  /* Стили для здоровых (синий) */
   background-color: rgba(0, 0, 255, 0.1);
   border-left: 4px solid blue;
 }
